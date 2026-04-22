@@ -8,6 +8,7 @@ type Project struct {
 	Command  string `json:"command"`
 	Note     string `json:"note"`
 	Category string `json:"category"`
+	ParentID int    `json:"parent_id"` // 父项目ID，0表示顶级项目
 }
 
 // Version 结构体对应版本迭代记录

@@ -414,6 +414,61 @@
         .modal-footer {
             padding: 0 1.5rem 1.5rem;
         }
+
+        /* 树形结构样式 */
+        .tree-item {
+            margin: 0.25rem 0;
+        }
+
+        .tree-item-content {
+            display: flex;
+            align-items: center;
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .tree-item-content:hover {
+            background-color: #f3f4f6;
+        }
+
+        .tree-toggle {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-right: 0.3rem;
+            font-size: 0.8rem;
+            color: #6b7280;
+            user-select: none;
+        }
+
+        .tree-toggle:hover {
+            color: #374151;
+        }
+
+        .tree-children {
+            margin-left: 1.5rem;
+            border-left: 1px solid #e5e7eb;
+            padding-left: 0.5rem;
+        }
+
+        .add-child-btn {
+            font-size: 0.75rem;
+            color: #6b7280;
+            cursor: pointer;
+            margin-left: auto;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .add-child-btn:hover {
+            color: #3b82f6;
+            background-color: #eff6ff;
+        }
     </style>
 </head>
 <body>
@@ -421,34 +476,22 @@
         <!-- 左侧菜单栏 -->
         <aside class="sidebar">
             <h2 class="sidebar-title">📁 Bobo Dev</h2>
-            
+
             <details class="sidebar-details" open>
                 <summary>📑 科研项目</summary>
-                <ul>
-                    {{ range .Projects }}{{ if eq .Category "科研" }}
-                    <li><a href="/?id={{.ID}}" {{ if and $.CurrentProject (eq $.CurrentProject.ID .ID) }}class="active"{{ end }}>{{.Name}}</a></li>
-                    {{ end }}{{ end }}
-                </ul>
+                <div id="tree-research" class="tree-container"></div>
             </details>
-            
+
             <details class="sidebar-details" open>
                 <summary>💻 个人项目</summary>
-                <ul>
-                    {{ range .Projects }}{{ if eq .Category "个人项目" }}
-                    <li><a href="/?id={{.ID}}" {{ if and $.CurrentProject (eq $.CurrentProject.ID .ID) }}class="active"{{ end }}>{{.Name}}</a></li>
-                    {{ end }}{{ end }}
-                </ul>
+                <div id="tree-personal" class="tree-container"></div>
             </details>
-            
+
             <details class="sidebar-details" open>
                 <summary>📂 其他项目</summary>
-                <ul>
-                    {{ range .Projects }}{{ if eq .Category "其他" }}
-                    <li><a href="/?id={{.ID}}" {{ if and $.CurrentProject (eq $.CurrentProject.ID .ID) }}class="active"{{ end }}>{{.Name}}</a></li>
-                    {{ end }}{{ end }}
-                </ul>
+                <div id="tree-other" class="tree-container"></div>
             </details>
-            
+
             <div class="add-btn">
                 <a href="#" onclick="document.getElementById('add-modal').showModal(); return false;">+ 新增项目</a>
             </div>
@@ -527,6 +570,13 @@
                     <option value="个人项目">个人项目</option>
                     <option value="其他">其他</option>
                 </select>
+                <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500; margin-top: 0.5rem;">父项目（可选，留空则为顶级项目）</label>
+                <select name="parent_id">
+                    <option value="0" selected>无（顶级项目）</option>
+                    {{ range .Projects }}
+                    <option value="{{.ID}}">{{.Name}}</option>
+                    {{ end }}
+                </select>
                 <input type="text" name="name" placeholder="项目名称" required>
                 <input type="text" name="path" placeholder="项目路径" required>
                 <input type="text" name="cmd" placeholder="启动指令">
@@ -557,6 +607,15 @@
                     <option value="科研" {{ if eq .CurrentProject.Category "科研" }}selected{{ end }}>科研</option>
                     <option value="个人项目" {{ if eq .CurrentProject.Category "个人项目" }}selected{{ end }}>个人项目</option>
                     <option value="其他" {{ if eq .CurrentProject.Category "其他" }}selected{{ end }}>其他</option>
+                </select>
+                <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500; margin-top: 0.5rem;">父项目（可选，留空则为顶级项目）</label>
+                <select name="parent_id">
+                    <option value="0" {{ if eq $.CurrentProject.ParentID 0 }}selected{{ end }}>无（顶级项目）</option>
+                    {{ range .Projects }}
+                    {{ if ne .ID $.CurrentProject.ID }}
+                    <option value="{{.ID}}" {{ if eq $.CurrentProject.ParentID .ID }}selected{{ end }}>{{.Name}}</option>
+                    {{ end }}
+                    {{ end }}
                 </select>
                 <input type="text" name="name" placeholder="项目名称" required value="{{ .CurrentProject.Name }}">
                 <input type="text" name="path" placeholder="项目路径" required value="{{ .CurrentProject.Path }}">
@@ -632,6 +691,128 @@
                 editVersionModal.showModal();
             }
         });
+        {{ end }}
+
+        // ====== 子项目树形结构功能 ======
+        {{ if .Projects }}
+        (function() {
+            // 从 Go 模板获取项目数据
+            const projects = [
+                {{ range .Projects }}
+                { id: {{.ID}}, name: "{{.Name}}", category: "{{.Category}}", parentId: {{.ParentID}} },
+                {{ end }}
+            ];
+
+            const currentProjectId = {{ if .CurrentProject }}{{ .CurrentProject.ID }}{{ else }}0{{ end }};
+
+            // 构建树形结构
+            function buildTree(items, parentId = 0) {
+                return items
+                    .filter(item => item.parentId === parentId)
+                    .map(item => ({
+                        ...item,
+                        children: buildTree(items, item.id)
+                    }));
+            }
+
+            // 渲染树节点
+            function renderTree(nodes, container, level = 0) {
+                nodes.forEach(node => {
+                    const hasChildren = node.children && node.children.length > 0;
+                    const isCurrent = node.id === currentProjectId;
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'tree-item';
+
+                    const contentDiv = document.createElement('div');
+                    contentDiv.className = 'tree-item-content';
+
+                    // 展开/折叠按钮（仅当有子项目时显示）
+                    if (hasChildren) {
+                        const toggle = document.createElement('span');
+                        toggle.className = 'tree-toggle';
+                        toggle.innerHTML = '▼';
+                        toggle.onclick = () => toggleNode(toggle, childrenDiv);
+                        contentDiv.appendChild(toggle);
+                    } else {
+                        const spacer = document.createElement('span');
+                        spacer.className = 'tree-toggle';
+                        spacer.innerHTML = '';
+                        contentDiv.appendChild(spacer);
+                    }
+
+                    // 项目链接
+                    const link = document.createElement('a');
+                    link.href = '/?id=' + node.id;
+                    link.textContent = node.name;
+                    if (isCurrent) link.classList.add('active');
+                    link.style.flex = '1';
+                    contentDiv.appendChild(link);
+
+                    // 添加子项目按钮
+                    const addChildBtn = document.createElement('span');
+                    addChildBtn.className = 'add-child-btn';
+                    addChildBtn.textContent = '+ 子项目';
+                    addChildBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        openAddChildModal(node.id);
+                    };
+                    contentDiv.appendChild(addChildBtn);
+
+                    itemDiv.appendChild(contentDiv);
+                    container.appendChild(itemDiv);
+
+                    // 递归渲染子项目
+                    if (hasChildren) {
+                        const childrenDiv = document.createElement('div');
+                        childrenDiv.className = 'tree-children';
+                        childrenDiv.style.display = 'block'; // 默认展开
+                        renderTree(node.children, childrenDiv, level + 1);
+                        container.appendChild(childrenDiv);
+                    }
+                });
+            }
+
+            // 切换节点展开/折叠状态
+            function toggleNode(toggle, childrenDiv) {
+                if (childrenDiv.style.display === 'none') {
+                    childrenDiv.style.display = 'block';
+                    toggle.innerHTML = '▼';
+                } else {
+                    childrenDiv.style.display = 'none';
+                    toggle.innerHTML = '▶';
+                }
+            }
+
+            // 打开添加子项目的模态框
+            function openAddChildModal(parentId) {
+                const modal = document.getElementById('add-modal');
+                const parentSelect = modal.querySelector('select[name="parent_id"]');
+                if (parentSelect) {
+                    parentSelect.value = parentId;
+                }
+                modal.showModal();
+            }
+
+            // 初始化树形结构
+            document.addEventListener('DOMContentLoaded', function() {
+                // 按分类构建并渲染树
+                const categories = ['科研', '个人项目', '其他'];
+                const containers = ['tree-research', 'tree-personal', 'tree-other'];
+
+                categories.forEach((category, index) => {
+                    const categoryProjects = projects.filter(p => p.category === category);
+                    const treeData = buildTree(categoryProjects);
+                    const container = document.getElementById(containers[index]);
+                    if (container && treeData.length > 0) {
+                        renderTree(treeData, container);
+                    }
+                });
+            });
+
+            // 将 openAddChildModal 函数暴露到全局作用域
+            window.openAddChildModal = openAddChildModal;
+        })();
         {{ end }}
     </script>
 </body>

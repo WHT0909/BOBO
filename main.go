@@ -35,13 +35,20 @@ func setupRoutes(r *gin.Engine) {
 	// 首页：展示项目
 	r.GET("/", func(c *gin.Context) {
 		// 1. 获取所有项目用于侧边栏展示
-		rows, _ := DB.Query("SELECT id, name, path, command, note, category FROM projects")
+		rows, err := DB.Query("SELECT id, name, path, command, note, category, parent_id FROM projects")
+		if err != nil {
+			c.String(http.StatusInternalServerError, "查询项目失败: "+err.Error())
+			return
+		}
 		var projects []Project
 		for rows.Next() {
 			var p Project
-			rows.Scan(&p.ID, &p.Name, &p.Path, &p.Command, &p.Note, &p.Category)
+			if err := rows.Scan(&p.ID, &p.Name, &p.Path, &p.Command, &p.Note, &p.Category, &p.ParentID); err != nil {
+				continue
+			}
 			projects = append(projects, p)
 		}
+		rows.Close()
 
 		// 2. 获取当前选中的项目 ID
 		selectedID := c.Query("id")
@@ -79,9 +86,17 @@ func setupRoutes(r *gin.Engine) {
 		path := c.PostForm("path")
 		cmd := c.PostForm("cmd")
 		note := c.PostForm("note")
-		category := c.PostForm("category") // 新增
-		DB.Exec("INSERT INTO projects (name, path, command, note, category) VALUES (?, ?, ?, ?, ?)",
-			name, path, cmd, note, category)
+		category := c.PostForm("category")  // 新增
+		parentID := c.PostForm("parent_id") // 父项目ID
+
+		// 转换 parent_id，默认为 0（顶级项目）
+		var parentIDInt int
+		if parentID != "" {
+			fmt.Sscanf(parentID, "%d", &parentIDInt)
+		}
+
+		DB.Exec("INSERT INTO projects (name, path, command, note, category, parent_id) VALUES (?, ?, ?, ?, ?, ?)",
+			name, path, cmd, note, category, parentIDInt)
 		c.Redirect(http.StatusSeeOther, "/")
 	})
 
@@ -126,20 +141,27 @@ func setupRoutes(r *gin.Engine) {
 	r.GET("/edit/:id", func(c *gin.Context) {
 		id := c.Param("id")
 		var p Project
-		err := DB.QueryRow("SELECT id, name, path, command, note, category FROM projects WHERE id = ?", id).Scan(&p.ID, &p.Name, &p.Path, &p.Command, &p.Note, &p.Category)
+		err := DB.QueryRow("SELECT id, name, path, command, note, category, parent_id FROM projects WHERE id = ?", id).Scan(&p.ID, &p.Name, &p.Path, &p.Command, &p.Note, &p.Category, &p.ParentID)
 		if err != nil {
 			c.String(http.StatusNotFound, "找不到该项目")
 			return
 		}
 
 		// 1. 获取所有项目用于侧边栏展示
-		rows, _ := DB.Query("SELECT id, name, path, command, note, category FROM projects")
+		rows, err := DB.Query("SELECT id, name, path, command, note, category, parent_id FROM projects")
+		if err != nil {
+			c.String(http.StatusInternalServerError, "查询项目列表失败: "+err.Error())
+			return
+		}
 		var projects []Project
 		for rows.Next() {
-			var p Project
-			rows.Scan(&p.ID, &p.Name, &p.Path, &p.Command, &p.Note, &p.Category)
-			projects = append(projects, p)
+			var proj Project
+			if err := rows.Scan(&proj.ID, &proj.Name, &proj.Path, &proj.Command, &proj.Note, &proj.Category, &proj.ParentID); err != nil {
+				continue
+			}
+			projects = append(projects, proj)
 		}
+		rows.Close()
 
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"Projects":       projects,
@@ -156,7 +178,14 @@ func setupRoutes(r *gin.Engine) {
 		cmd := c.PostForm("cmd")
 		note := c.PostForm("note")
 		category := c.PostForm("category")
-		_, err := DB.Exec("UPDATE projects SET name = ?, path = ?, command = ?, note = ?, category = ? WHERE id = ?", name, path, cmd, note, category, id)
+		parentID := c.PostForm("parent_id")
+
+		var parentIDInt int
+		if parentID != "" {
+			fmt.Sscanf(parentID, "%d", &parentIDInt)
+		}
+
+		_, err := DB.Exec("UPDATE projects SET name = ?, path = ?, command = ?, note = ?, category = ?, parent_id = ? WHERE id = ?", name, path, cmd, note, category, parentIDInt, id)
 		if err != nil {
 			c.String(http.StatusInternalServerError, "更新失败: "+err.Error())
 			return
@@ -229,7 +258,7 @@ func setupRoutes(r *gin.Engine) {
 		}
 
 		// 获取所有项目用于侧边栏展示
-		rows, err := DB.Query("SELECT id, name, path, command, note, category FROM projects")
+		rows, err := DB.Query("SELECT id, name, path, command, note, category, parent_id FROM projects")
 		if err != nil {
 			c.String(http.StatusInternalServerError, "查询项目列表失败: "+err.Error())
 			return
@@ -237,7 +266,7 @@ func setupRoutes(r *gin.Engine) {
 		var projects []Project
 		for rows.Next() {
 			var p Project
-			if err := rows.Scan(&p.ID, &p.Name, &p.Path, &p.Command, &p.Note, &p.Category); err != nil {
+			if err := rows.Scan(&p.ID, &p.Name, &p.Path, &p.Command, &p.Note, &p.Category, &p.ParentID); err != nil {
 				continue
 			}
 			projects = append(projects, p)

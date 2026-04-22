@@ -25,13 +25,21 @@ func InitDB() {
 		path TEXT,
 		command TEXT,
 		note TEXT,
-		category TEXT
+		category TEXT,
+		parent_id INTEGER DEFAULT 0
 	);`
 
 	_, err = DB.Exec(sqlStmt)
 	if err != nil {
 		log.Printf("%q: %s\n", err, sqlStmt)
 		return
+	}
+
+	// 检查并添加 parent_id 列（兼容旧数据库）
+	var hasColumn bool
+	err = DB.QueryRow("SELECT COUNT(*) FROM pragma_table_info('projects') WHERE name = 'parent_id'").Scan(&hasColumn)
+	if err == nil && !hasColumn {
+		DB.Exec("ALTER TABLE projects ADD COLUMN parent_id INTEGER DEFAULT 0")
 	}
 
 	// 创建 versions 表
