@@ -294,6 +294,45 @@
             white-space: pre-wrap;
             word-wrap: break-word;
         }
+
+        .version-actions {
+            margin-top: 0.75rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .version-actions .btn-edit,
+        .version-actions .btn-delete {
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+
+        .version-actions .btn-edit {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fbbf24;
+        }
+
+        .version-actions .btn-edit:hover {
+            background-color: #fde68a;
+            transform: translateY(-1px);
+        }
+
+        .version-actions .btn-delete {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .version-actions .btn-delete:hover {
+            background-color: #fecaca;
+            transform: translateY(-1px);
+        }
         
         /* 主内容区字体调大 */
         .project-detail h1 {
@@ -453,6 +492,10 @@
                     <div class="version-item">
                         <div class="version-time">🕐 更新时间：{{ .UpdateTime }}</div>
                         <div class="version-desc">📝 更新描述：{{ .Description }}</div>
+                        <div class="version-actions">
+                            <a href="/edit-version/{{ .ID }}" class="btn-edit" title="编辑">✏️ 编辑</a>
+                            <a href="/delete-version/{{ .ID }}" class="btn-delete" onclick="return confirm('确定要删除这条版本记录吗？')" title="删除">🗑️ 删除</a>
+                        </div>
                     </div>
                     {{ end }}
                 </div>
@@ -490,6 +533,7 @@
                 <textarea name="note" placeholder="备注内容"></textarea>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="window.location.href='/?id={{ .EditVersion.ProjectID }}'">取消</button>
                 <button type="submit" class="btn-primary">确认保存</button>
             </div>
         </form>
@@ -546,7 +590,28 @@
         </form>
     </dialog>
     {{ end }}
-    
+
+    <!-- 编辑版本迭代对话框 -->
+    <dialog id="edit-version-modal">
+        {{ if .EditVersion }}
+        <div class="modal-header">
+            <h3>📋 编辑版本迭代</h3>
+            <button class="modal-close" onclick="document.getElementById('edit-version-modal').close();">&times;</button>
+        </div>
+        <form method="POST" action="/update-version/{{ .EditVersion.ID }}">
+            <div class="modal-body">
+                <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">更新时间</label>
+                <input type="text" name="update_time" value="{{ .EditVersion.UpdateTime }}" required>
+                <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">更新描述</label>
+                <textarea name="description" required>{{ .EditVersion.Description }}</textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn-primary">确认保存</button>
+            </div>
+        </form>
+        {{ end }}
+    </dialog>
+
     <script>
         // 如果处于编辑模式，自动打开编辑对话框
         {{ if .EditMode }}
@@ -554,6 +619,17 @@
             const editModal = document.getElementById('edit-modal');
             if (editModal && !editModal.hasAttribute('open')) {
                 editModal.showModal();
+            }
+        });
+        {{ end }}
+
+        // 如果处于版本编辑模式，自动打开编辑版本对话框
+        {{ if .EditVersionMode }}
+        document.addEventListener('DOMContentLoaded', function() {
+            const editVersionModal = document.getElementById('edit-version-modal');
+            if (editVersionModal) {
+                // 使用 showModal() 确保以模态方式显示
+                editVersionModal.showModal();
             }
         });
         {{ end }}
