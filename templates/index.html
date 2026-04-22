@@ -1,194 +1,562 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bobo Dev 面板</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <style>
-        /* 1panel风格布局 */
-        body { margin: 0; display: flex; height: 100vh; overflow: hidden; background: #f5f7fa; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+            background: #f5f7fa;
+        }
         
         /* 左侧菜单栏 */
-        aside {
-            width: 260px; background: #ffffff; border-right: 1px solid #e5e7eb;
-            padding: 1rem; display: flex; flex-direction: column; overflow-y: auto;
-            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
-        }
-        aside h2 { font-size: 1.1rem; color: #1f2937; margin-bottom: 1.5rem; font-weight: 600; }
-        details { margin-bottom: 0.5rem; }
-        details summary { 
-            font-weight: 500; color: #4b5563; list-style: none; cursor: pointer; 
-            padding: 0.5rem 0.75rem; border-radius: 6px; transition: background 0.2s;
-            display: flex; align-items: center; font-size: 0.85rem;
-        }
-        details summary:hover { background: #f3f4f6; }
-        details summary::before {
-            content: "▶"; margin-right: 0.5rem; font-size: 0.65rem; transition: transform 0.2s;
-        }
-        details[open] summary::before { transform: rotate(90deg); }
-        details ul { padding-left: 0; list-style: none; margin-top: 0.3rem; }
-        details li { margin-bottom: 0.15rem; }
-        details a { 
-            color: #6b7280; text-decoration: none; font-size: 0.75rem; 
-            padding: 0.35rem 0.75rem 0.35rem 1.5rem; display: block; border-radius: 6px;
-            transition: background 0.2s;
-        }
-        details a:hover { background: #f3f4f6; color: #1f2937; }
-        details a.active { background: #e5e7eb; color: #1f2937; font-weight: 500; }
-
-        /* 右侧内容区 */
-        main { flex: 1; padding: 0; overflow-y: auto; }
-        .project-detail { 
-            background: white; padding: 2rem; border-radius: 0; 
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08); min-height: 100vh;
-        }
-        .tag { 
-            display: inline-block; padding: 0.3rem 0.8rem; 
-            background: #eff6ff; color: #2563eb; border-radius: 20px; 
-            font-size: 0.8rem; font-weight: 500; margin-bottom: 1rem;
-        }
-        code { 
-            background: #f3f4f6; padding: 0.3rem 0.6rem; 
-            color: #e11d48; border-radius: 4px; font-size: 0.9rem;
+        .sidebar {
+            width: 260px;
+            background: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
         }
         
-        /* 底部添加按钮固定在侧边栏底部 */
-        .add-btn { margin-top: auto; padding-top: 1rem; }
-        .add-btn a { 
-            display: block; text-align: center; padding: 0.75rem; 
-            background: #3b82f6; color: white; border-radius: 6px;
-            text-decoration: none; font-weight: 500; transition: background 0.2s;
+        .sidebar-title {
+            font-size: 1.2rem;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
         }
-        .add-btn a:hover { background: #2563eb; }
+        
+        .sidebar-details {
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-details summary {
+            font-weight: 500;
+            color: #4b5563;
+            list-style: none;
+            cursor: pointer;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+        
+        .sidebar-details summary:hover {
+            background: #f3f4f6;
+        }
+        
+        .sidebar-details summary::before {
+            content: "▶";
+            margin-right: 0.5rem;
+            font-size: 0.75rem;
+            transition: transform 0.2s;
+        }
+        
+        .sidebar-details[open] summary::before {
+            transform: rotate(90deg);
+        }
+        
+        .sidebar-details ul {
+            padding-left: 0;
+            list-style: none;
+            margin-top: 0.25rem;
+        }
+        
+        .sidebar-details li {
+            margin-bottom: 0.1rem;
+        }
+        
+        .sidebar-details a {
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 0.9rem;
+            padding: 0.35rem 0.75rem 0.35rem 1.5rem;
+            display: block;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        
+        .sidebar-details a:hover {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+        
+        .sidebar-details a.active {
+            background: #e5e7eb;
+            color: #1f2937;
+            font-weight: 500;
+        }
+        
+        .add-btn {
+            margin-top: auto;
+            padding-top: 1rem;
+        }
+        
+        .add-btn a {
+            display: block;
+            text-align: center;
+            padding: 0.75rem;
+            background: #3b82f6;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+        
+        .add-btn a:hover {
+            background: #2563eb;
+        }
+        
+        /* 右侧内容区 */
+        .main-content {
+            flex: 1;
+            background: white;
+            overflow-y: auto;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .project-detail {
+            background: white;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #9ca3af;
+            padding: 10rem 2rem;
+        }
+        
+        .empty-state h2 {
+            margin-top: 1rem;
+            color: #6b7280;
+            font-size: 1.5rem;
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: #eff6ff;
+            color: #2563eb;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+        
+        .project-detail h1 {
+            font-size: 2rem;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .project-detail hr {
+            margin: 1.5rem 0;
+            border: none;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .project-detail h3 {
+            margin-bottom: 0.5rem;
+            color: #374151;
+            font-size: 1rem;
+        }
+        
+        .project-detail p {
+            margin-bottom: 1.5rem;
+        }
+        
+        .project-detail code {
+            background: #f3f4f6;
+            padding: 0.3rem 0.6rem;
+            color: #e11d48;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .note-box {
+            background: #f9fafb;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+            margin-bottom: 1.5rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 1rem;
+        }
+        
+        .button-group {
+            margin-top: 2rem;
+        }
+        
+        .button-group a,
+        .button-group button {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+            margin-right: 1rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 10px rgba(37, 99, 235, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        /* 版本迭代样式 */
+        .version-section {
+            margin-top: 2rem;
+        }
+        
+        .version-section h3 {
+            color: #1f2937;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            border-left: 4px solid #3b82f6;
+            padding-left: 0.75rem;
+        }
+        
+        .version-item {
+            background: #f8fafc;
+            border-left: 3px solid #3b82f6;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+        
+        .version-time {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .version-desc {
+            color: #374151;
+            font-size: 0.95rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        /* 主内容区字体调大 */
+        .project-detail h1 {
+            font-size: 2.2rem;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .project-detail h3 {
+            margin-bottom: 0.5rem;
+            color: #374151;
+            font-size: 1.15rem;
+        }
+        
+        .project-detail code {
+            background: #f3f4f6;
+            padding: 0.3rem 0.6rem;
+            color: #e11d48;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        /* 模态框 */
+        dialog {
+            margin: auto;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            width: 90%;
+            max-width: 500px;
+            padding: 0;
+        }
+        
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #1f2937;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-body select,
+        .modal-body input,
+        .modal-body textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+        
+        .modal-body textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .modal-footer {
+            padding: 0 1.5rem 1.5rem;
+        }
     </style>
 </head>
 <body>
-
-<aside>
-    <h2>📁 Bobo Dev</h2>
-    
-    <details open>
-        <summary>📑 科研项目</summary>
-        <ul>
-            {{ range .Projects }}{{ if eq .Category "科研" }}
-            <li><a href="/?id={{.ID}}" {{ if and $.CurrentProject (eq $.CurrentProject.ID .ID) }}class="active"{{ end }}>{{.Name}}</a></li>
-            {{ end }}{{ end }}
-        </ul>
-    </details>
-
-    <details open>
-        <summary>💻 个人项目</summary>
-        <ul>
-            {{ range .Projects }}{{ if eq .Category "个人项目" }}
-            <li><a href="/?id={{.ID}}" {{ if and $.CurrentProject (eq $.CurrentProject.ID .ID) }}class="active"{{ end }}>{{.Name}}</a></li>
-            {{ end }}{{ end }}
-        </ul>
-    </details>
-
-    <details open>
-        <summary>📂 其他项目</summary>
-        <ul>
-            {{ range .Projects }}{{ if eq .Category "其他" }}
-            <li><a href="/?id={{.ID}}" {{ if and $.CurrentProject (eq $.CurrentProject.ID .ID) }}class="active"{{ end }}>{{.Name}}</a></li>
-            {{ end }}{{ end }}
-        </ul>
-    </details>
-
-    <div class="add-btn">
-        <a href="#add-modal" onclick="document.getElementById('add-modal').open = true">+ 新增项目</a>
-    </div>
-</aside>
-
-<main>
-    {{ if .CurrentProject }}
-    <div class="project-detail">
-        <span class="tag">{{ .CurrentProject.Category }}</span>
-        <h1>{{ .CurrentProject.Name }}</h1>
-        <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e5e7eb;">
-        
-        <div style="margin-bottom: 1.5rem;">
-            <h3 style="margin-bottom: 0.5rem; color: #374151;">项目路径</h3>
-            <p><code>{{ .CurrentProject.Path }}</code></p>
-        </div>
-        
-        <div style="margin-bottom: 1.5rem;">
-            <h3 style="margin-bottom: 0.5rem; color: #374151;">启动指令</h3>
-            <p><code>{{ .CurrentProject.Command }}</code></p>
-        </div>
-        
-        <div style="margin-bottom: 1.5rem;">
-            <h3 style="margin-bottom: 0.5rem; color: #374151;">备注信息</h3>
-            <div style="background: #f9fafb; padding: 1rem; border-radius: 6px; border-left: 4px solid #3b82f6;">
-                {{ .CurrentProject.Note }}
+    <div class="container">
+        <!-- 左侧菜单栏 -->
+        <aside class="sidebar">
+            <h2 class="sidebar-title">📁 Bobo Dev</h2>
+            
+            <details class="sidebar-details" open>
+                <summary>📑 科研项目</summary>
+                <ul>
+                    {{ range .Projects }}{{ if eq .Category "科研" }}
+                    <li><a href="/?id={{.ID}}" {{ if and $.CurrentProject (eq $.CurrentProject.ID .ID) }}class="active"{{ end }}>{{.Name}}</a></li>
+                    {{ end }}{{ end }}
+                </ul>
+            </details>
+            
+            <details class="sidebar-details" open>
+                <summary>💻 个人项目</summary>
+                <ul>
+                    {{ range .Projects }}{{ if eq .Category "个人项目" }}
+                    <li><a href="/?id={{.ID}}" {{ if and $.CurrentProject (eq $.CurrentProject.ID .ID) }}class="active"{{ end }}>{{.Name}}</a></li>
+                    {{ end }}{{ end }}
+                </ul>
+            </details>
+            
+            <details class="sidebar-details" open>
+                <summary>📂 其他项目</summary>
+                <ul>
+                    {{ range .Projects }}{{ if eq .Category "其他" }}
+                    <li><a href="/?id={{.ID}}" {{ if and $.CurrentProject (eq $.CurrentProject.ID .ID) }}class="active"{{ end }}>{{.Name}}</a></li>
+                    {{ end }}{{ end }}
+                </ul>
+            </details>
+            
+            <div class="add-btn">
+                <a href="#" onclick="document.getElementById('add-modal').showModal(); return false;">+ 新增项目</a>
             </div>
-        </div>
+        </aside>
         
-        <div style="margin-top: 2rem;">
-            <a href="/run/{{ .CurrentProject.ID }}" role="button" style="background: #3b82f6; border-color: #3b82f6;">立即启动服务</a>
-            <a href="#" onclick="document.getElementById('edit-modal').open = true" role="button" class="secondary" style="margin-left: 1rem;">修改项目</a>
-            <a href="/delete/{{ .CurrentProject.ID }}" role="button" class="outline" style="margin-left: 1rem; background: #ef4444; border-color: #ef4444; color: white;">删除项目</a>
+        <!-- 右侧内容区 -->
+        <main class="main-content">
+            {{ if .CurrentProject }}
+            <div class="project-detail">
+                <span class="tag">{{ .CurrentProject.Category }}</span>
+                <h1>{{ .CurrentProject.Name }}</h1>
+                <hr>
+                
+                <div>
+                    <h3>项目路径</h3>
+                    <p><code>{{ .CurrentProject.Path }}</code></p>
+                </div>
+                
+                <div>
+                    <h3>启动指令</h3>
+                    <p><code>{{ .CurrentProject.Command }}</code></p>
+                </div>
+                
+                <div>
+                    <h3>备注信息</h3>
+                    <div class="note-box">{{ .CurrentProject.Note }}</div>
+                </div>
+                
+                <div class="button-group">
+                    <a href="/run/{{ .CurrentProject.ID }}" class="btn-primary">立即启动服务</a>
+                    <a href="#" onclick="document.getElementById('edit-modal').showModal(); return false;" class="btn-secondary">修改项目</a>
+                    <a href="#" onclick="document.getElementById('version-modal').showModal(); return false;" class="btn-secondary">版本迭代</a>
+                    <a href="/delete/{{ .CurrentProject.ID }}" class="btn-danger">删除项目</a>
+                </div>
+                
+                <!-- 版本迭代展示 -->
+                {{ if .Versions }}
+                <div class="version-section">
+                    <h3>📋 版本迭代</h3>
+                    {{ range .Versions }}
+                    <div class="version-item">
+                        <div class="version-time">🕐 更新时间：{{ .UpdateTime }}</div>
+                        <div class="version-desc">📝 更新描述：{{ .Description }}</div>
+                    </div>
+                    {{ end }}
+                </div>
+                {{ end }}
+            </div>
+            {{ else }}
+            <div class="empty-state">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 1a2 2 0 0 1 2 2v2H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                </svg>
+                <h2>请在左侧选择一个项目</h2>
+                <p>选择项目后将显示详细信息和操作选项</p>
+            </div>
+            {{ end }}
+        </main>
+    </div>
+    
+    <!-- 新增项目对话框 -->
+    <dialog id="add-modal">
+        <div class="modal-header">
+            <h3>新增项目</h3>
+            <button class="modal-close" onclick="document.getElementById('add-modal').close();">&times;</button>
         </div>
-    </div>
+        <form method="POST" action="/add">
+            <div class="modal-body">
+                <select name="category" required>
+                    <option value="" disabled selected>选择分类...</option>
+                    <option value="科研">科研</option>
+                    <option value="个人项目">个人项目</option>
+                    <option value="其他">其他</option>
+                </select>
+                <input type="text" name="name" placeholder="项目名称" required>
+                <input type="text" name="path" placeholder="项目路径" required>
+                <input type="text" name="cmd" placeholder="启动指令">
+                <textarea name="note" placeholder="备注内容"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn-primary">确认保存</button>
+            </div>
+        </form>
+    </dialog>
+    
+    <!-- 编辑项目对话框 -->
+    {{ if .EditMode }}
+    <dialog id="edit-modal" open>
     {{ else }}
-    <div style="text-align: center; color: #9ca3af; margin-top: 10rem; padding: 2rem;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 1a2 2 0 0 1 2 2v2H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
-        </svg>
-        <h2 style="margin-top: 1rem; color: #6b7280;">请在左侧选择一个项目</h2>
-        <p style="margin-top: 0.5rem;">选择项目后将显示详细信息和操作选项</p>
-    </div>
+    <dialog id="edit-modal">
     {{ end }}
-</main>
-
-<dialog id="add-modal">
-  <article>
-    <header>
-      <a href="" aria-label="Close" class="close"></a>
-      新增项目
-    </header>
-    <form method="POST" action="/add">
-        <select name="category" required>
-            <option value="" disabled selected>选择分类...</option>
-            <option value="科研">科研</option>
-            <option value="个人项目">个人项目</option>
-            <option value="其他">其他</option>
-        </select>
-        <input type="text" name="name" placeholder="项目名称" required>
-        <input type="text" name="path" placeholder="项目路径" required>
-        <input type="text" name="cmd" placeholder="启动指令">
-        <textarea name="note" placeholder="备注内容"></textarea>
-        <button type="submit" style="background: #3b82f6; border-color: #3b82f6;">确认保存</button>
-    </form>
-  </article>
-</dialog>
-
-{{ if .EditMode }}
-<dialog id="edit-modal" open>
-{{ else }}
-<dialog id="edit-modal">
-{{ end }}
-  <article>
-    <header>
-      <a href="" aria-label="Close" class="close"></a>
-      修改项目
-    </header>
+        <div class="modal-header">
+            <h3>修改项目</h3>
+            <button class="modal-close" onclick="document.getElementById('edit-modal').close();">&times;</button>
+        </div>
+        {{ if .CurrentProject }}
+        <form method="POST" action="/update/{{ .CurrentProject.ID }}">
+            <div class="modal-body">
+                <select name="category" required>
+                    <option value="" disabled>选择分类...</option>
+                    <option value="科研" {{ if eq .CurrentProject.Category "科研" }}selected{{ end }}>科研</option>
+                    <option value="个人项目" {{ if eq .CurrentProject.Category "个人项目" }}selected{{ end }}>个人项目</option>
+                    <option value="其他" {{ if eq .CurrentProject.Category "其他" }}selected{{ end }}>其他</option>
+                </select>
+                <input type="text" name="name" placeholder="项目名称" required value="{{ .CurrentProject.Name }}">
+                <input type="text" name="path" placeholder="项目路径" required value="{{ .CurrentProject.Path }}">
+                <input type="text" name="cmd" placeholder="启动指令" value="{{ .CurrentProject.Command }}">
+                <textarea name="note" placeholder="备注内容">{{ .CurrentProject.Note }}</textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn-primary">确认保存</button>
+            </div>
+        </form>
+        {{ end }}
+    </dialog>
+    
+    <!-- 版本迭代对话框 -->
     {{ if .CurrentProject }}
-    <form method="POST" action="/update/{{ .CurrentProject.ID }}">
-        <select name="category" required>
-            <option value="" disabled>选择分类...</option>
-            <option value="科研" {{ if eq .CurrentProject.Category "科研" }}selected{{ end }}>科研</option>
-            <option value="个人项目" {{ if eq .CurrentProject.Category "个人项目" }}selected{{ end }}>个人项目</option>
-            <option value="其他" {{ if eq .CurrentProject.Category "其他" }}selected{{ end }}>其他</option>
-        </select>
-        <input type="text" name="name" placeholder="项目名称" required value="{{ .CurrentProject.Name }}">
-        <input type="text" name="path" placeholder="项目路径" required value="{{ .CurrentProject.Path }}">
-        <input type="text" name="cmd" placeholder="启动指令" value="{{ .CurrentProject.Command }}">
-        <textarea name="note" placeholder="备注内容">{{ .CurrentProject.Note }}</textarea>
-        <button type="submit" style="background: #3b82f6; border-color: #3b82f6;">确认保存</button>
-    </form>
+    <dialog id="version-modal">
+        <div class="modal-header">
+            <h3>📋 添加版本迭代</h3>
+            <button class="modal-close" onclick="document.getElementById('version-modal').close();">&times;</button>
+        </div>
+        <form method="POST" action="/add-version/{{ .CurrentProject.ID }}">
+            <div class="modal-body">
+                <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">更新时间（留空则使用当前时间）</label>
+                <input type="text" name="update_time" placeholder="例如：2026-04-22 18:30:42">
+                <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">更新描述</label>
+                <textarea name="description" placeholder="例如：修改了前端页面" required></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn-primary">确认保存</button>
+            </div>
+        </form>
+    </dialog>
     {{ end }}
-  </article>
-</dialog>
-
+    
+    <script>
+        // 如果处于编辑模式，自动打开编辑对话框
+        {{ if .EditMode }}
+        document.addEventListener('DOMContentLoaded', function() {
+            const editModal = document.getElementById('edit-modal');
+            if (editModal && !editModal.hasAttribute('open')) {
+                editModal.showModal();
+            }
+        });
+        {{ end }}
+    </script>
 </body>
 </html>

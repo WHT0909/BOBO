@@ -17,7 +17,7 @@ func InitDB() {
 		log.Fatal(err)
 	}
 
-	// 创建表的 SQL 语句
+	// 创建 projects 表
 	sqlStmt := `
 	CREATE TABLE IF NOT EXISTS projects (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,6 +31,22 @@ func InitDB() {
 	_, err = DB.Exec(sqlStmt)
 	if err != nil {
 		log.Printf("%q: %s\n", err, sqlStmt)
+		return
+	}
+
+	// 创建 versions 表
+	sqlStmt2 := `
+	CREATE TABLE IF NOT EXISTS versions (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		project_id INTEGER,
+		update_time TEXT,
+		description TEXT,
+		FOREIGN KEY(project_id) REFERENCES projects(id)
+	);`
+
+	_, err = DB.Exec(sqlStmt2)
+	if err != nil {
+		log.Printf("%q: %s\n", err, sqlStmt2)
 		return
 	}
 }

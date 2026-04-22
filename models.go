@@ -9,3 +9,11 @@ type Project struct {
 	Note     string `json:"note"`
 	Category string `json:"category"`
 }
+
+// Version 结构体对应版本迭代记录
+type Version struct {
+	ID          int    `json:"id"`
+	ProjectID   int    `json:"project_id"`
+	UpdateTime  string `json:"update_time"`
+	Description string `json:"description"`
+}

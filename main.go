@@ -6,6 +6,7 @@ import (
 	"os" // 新增
 	"os/exec"
 	"runtime"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,6 +46,7 @@ func setupRoutes(r *gin.Engine) {
 		// 2. 获取当前选中的项目 ID
 		selectedID := c.Query("id")
 		var currentProject *Project
+		var versions []Version
 		if selectedID != "" {
 			for _, p := range projects {
 				// 这里简单转换一下匹配
@@ -53,11 +55,21 @@ func setupRoutes(r *gin.Engine) {
 					break
 				}
 			}
+			// 获取该项目的版本迭代记录
+			if currentProject != nil {
+				versionRows, _ := DB.Query("SELECT id, project_id, update_time, description FROM versions WHERE project_id = ? ORDER BY id DESC", currentProject.ID)
+				for versionRows.Next() {
+					var v Version
+					versionRows.Scan(&v.ID, &v.ProjectID, &v.UpdateTime, &v.Description)
+					versions = append(versions, v)
+				}
+			}
 		}
 
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"Projects":       projects,
 			"CurrentProject": currentProject,
+			"Versions":       versions,
 		})
 	})
 
@@ -70,7 +82,7 @@ func setupRoutes(r *gin.Engine) {
 		category := c.PostForm("category") // 新增
 		DB.Exec("INSERT INTO projects (name, path, command, note, category) VALUES (?, ?, ?, ?, ?)",
 			name, path, cmd, note, category)
-		c.Redirect(http.StatusMovedPermanently, "/")
+		c.Redirect(http.StatusSeeOther, "/")
 	})
 
 	// 核心启动接口
@@ -149,6 +161,35 @@ func setupRoutes(r *gin.Engine) {
 			c.String(http.StatusInternalServerError, "更新失败: "+err.Error())
 			return
 		}
-		c.Redirect(http.StatusMovedPermanently, "/")
+		c.Redirect(http.StatusSeeOther, "/?id="+id)
+	})
+
+	// 添加版本迭代接口
+	r.POST("/add-version/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		updateTime := c.PostForm("update_time")
+		description := c.PostForm("description")
+
+		// 如果用户没有提供时间，则使用当前时间
+		if updateTime == "" {
+			updateTime = time.Now().Format("2006-01-02 15:04:05")
+		}
+
+		// 检查数据库连接并执行插入
+		_, err := DB.Exec("INSERT INTO versions (project_id, update_time, description) VALUES (?, ?, ?)", id, updateTime, description)
+		if err != nil {
+			c.String(http.StatusInternalServerError, "添加版本迭代失败: "+err.Error())
+			return
+		}
+
+		// 关键修复：确保重定向到带参数的首页
+		// 使用 303 (StatusSeeOther) 强制浏览器重定向到 GET 请求的首页
+		c.Redirect(http.StatusSeeOther, "/?id="+id)
+	})
+
+	// 处理直接访问 /add-version/:id 的 GET 请求，重定向回项目详情
+	r.GET("/add-version/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		c.Redirect(http.StatusSeeOther, "/?id="+id)
 	})
 }
