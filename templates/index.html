@@ -475,20 +475,20 @@
     <div class="container">
         <!-- 左侧菜单栏 -->
         <aside class="sidebar">
-            <h2 class="sidebar-title">📁 Bobo Dev</h2>
+            <h2 class="sidebar-title">Bobo Dev</h2>
 
             <details class="sidebar-details" open>
-                <summary>📑 科研项目</summary>
+                <summary>科研项目</summary>
                 <div id="tree-research" class="tree-container"></div>
             </details>
 
             <details class="sidebar-details" open>
-                <summary>💻 个人项目</summary>
+                <summary>个人项目</summary>
                 <div id="tree-personal" class="tree-container"></div>
             </details>
 
             <details class="sidebar-details" open>
-                <summary>📂 其他项目</summary>
+                <summary>其他项目</summary>
                 <div id="tree-other" class="tree-container"></div>
             </details>
 
@@ -530,14 +530,14 @@
                 <!-- 版本迭代展示 -->
                 {{ if .Versions }}
                 <div class="version-section">
-                    <h3>📋 版本迭代</h3>
+                    <h3>版本迭代</h3>
                     {{ range .Versions }}
                     <div class="version-item">
-                        <div class="version-time">🕐 更新时间：{{ .UpdateTime }}</div>
-                        <div class="version-desc">📝 更新描述：{{ .Description }}</div>
+                        <div class="version-time">更新时间：{{ .UpdateTime }}</div>
+                        <div class="version-desc">更新描述：{{ .Description }}</div>
                         <div class="version-actions">
-                            <a href="/edit-version/{{ .ID }}" class="btn-edit" title="编辑">✏️ 编辑</a>
-                            <a href="/delete-version/{{ .ID }}" class="btn-delete" onclick="return confirm('确定要删除这条版本记录吗？')" title="删除">🗑️ 删除</a>
+                            <a href="/edit-version/{{ .ID }}" class="btn-edit" title="编辑">编辑</a>
+                            <a href="/delete-version/{{ .ID }}" class="btn-delete" onclick="return confirm('确定要删除这条版本记录吗？')" title="删除">删除</a>
                         </div>
                     </div>
                     {{ end }}
@@ -562,19 +562,19 @@
             <h3>新增项目</h3>
             <button class="modal-close" onclick="document.getElementById('add-modal').close();">&times;</button>
         </div>
-        <form method="POST" action="/add">
+        <form method="POST" action="/add" id="add-form">
             <div class="modal-body">
-                <select name="category" required>
+                <select name="category" id="add-category" required>
                     <option value="" disabled selected>选择分类...</option>
                     <option value="科研">科研</option>
                     <option value="个人项目">个人项目</option>
                     <option value="其他">其他</option>
                 </select>
                 <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500; margin-top: 0.5rem;">父项目（可选，留空则为顶级项目）</label>
-                <select name="parent_id">
-                    <option value="0" selected>无（顶级项目）</option>
+                <select name="parent_id" id="add-parent-id">
+                    <option value="0" selected data-category="">无（顶级项目）</option>
                     {{ range .Projects }}
-                    <option value="{{.ID}}">{{.Name}}</option>
+                    <option value="{{.ID}}" data-category="{{.Category}}">{{.Name}}</option>
                     {{ end }}
                 </select>
                 <input type="text" name="name" placeholder="项目名称" required>
@@ -600,20 +600,20 @@
             <button class="modal-close" onclick="document.getElementById('edit-modal').close();">&times;</button>
         </div>
         {{ if .CurrentProject }}
-        <form method="POST" action="/update/{{ .CurrentProject.ID }}">
+        <form method="POST" action="/update/{{ .CurrentProject.ID }}" id="edit-form">
             <div class="modal-body">
-                <select name="category" required>
+                <select name="category" id="edit-category" required>
                     <option value="" disabled>选择分类...</option>
                     <option value="科研" {{ if eq .CurrentProject.Category "科研" }}selected{{ end }}>科研</option>
                     <option value="个人项目" {{ if eq .CurrentProject.Category "个人项目" }}selected{{ end }}>个人项目</option>
                     <option value="其他" {{ if eq .CurrentProject.Category "其他" }}selected{{ end }}>其他</option>
                 </select>
                 <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500; margin-top: 0.5rem;">父项目（可选，留空则为顶级项目）</label>
-                <select name="parent_id">
-                    <option value="0" {{ if eq $.CurrentProject.ParentID 0 }}selected{{ end }}>无（顶级项目）</option>
+                <select name="parent_id" id="edit-parent-id">
+                    <option value="0" {{ if eq $.CurrentProject.ParentID 0 }}selected{{ end }} data-category="">无（顶级项目）</option>
                     {{ range .Projects }}
                     {{ if ne .ID $.CurrentProject.ID }}
-                    <option value="{{.ID}}" {{ if eq $.CurrentProject.ParentID .ID }}selected{{ end }}>{{.Name}}</option>
+                    <option value="{{.ID}}" data-category="{{.Category}}" {{ if eq $.CurrentProject.ParentID .ID }}selected{{ end }}>{{.Name}}</option>
                     {{ end }}
                     {{ end }}
                 </select>
@@ -633,7 +633,7 @@
     {{ if .CurrentProject }}
     <dialog id="version-modal">
         <div class="modal-header">
-            <h3>📋 添加版本迭代</h3>
+            <h3>添加版本迭代</h3>
             <button class="modal-close" onclick="document.getElementById('version-modal').close();">&times;</button>
         </div>
         <form method="POST" action="/add-version/{{ .CurrentProject.ID }}">
@@ -654,7 +654,7 @@
     <dialog id="edit-version-modal">
         {{ if .EditVersion }}
         <div class="modal-header">
-            <h3>📋 编辑版本迭代</h3>
+            <h3>编辑版本迭代</h3>
             <button class="modal-close" onclick="document.getElementById('edit-version-modal').close();">&times;</button>
         </div>
         <form method="POST" action="/update-version/{{ .EditVersion.ID }}">
@@ -692,6 +692,84 @@
             }
         });
         {{ end }}
+
+        // ====== 子项目分类自动同步功能 ======
+        document.addEventListener('DOMContentLoaded', function() {
+            // 新增项目对话框：父项目选择变化时自动填充分类
+            const addParentSelect = document.getElementById('add-parent-id');
+            const addCategorySelect = document.getElementById('add-category');
+
+            if (addParentSelect && addCategorySelect) {
+                addParentSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const parentCategory = selectedOption.getAttribute('data-category');
+
+                    if (parentCategory && parentCategory !== '') {
+                        // 选择了父项目，自动设置分类并禁用
+                        addCategorySelect.value = parentCategory;
+                        addCategorySelect.disabled = true;
+                        addCategorySelect.title = '子项目分类必须与父项目一致';
+                    } else {
+                        // 没有选择父项目（顶级项目），恢复分类选择
+                        addCategorySelect.disabled = false;
+                        addCategorySelect.title = '';
+                    }
+                });
+
+                // 初始化时检查是否已预选父项目
+                if (addParentSelect.value !== '0') {
+                    addParentSelect.dispatchEvent(new Event('change'));
+                }
+            }
+
+            // 编辑项目对话框：父项目选择变化时自动填充分类
+            const editParentSelect = document.getElementById('edit-parent-id');
+            const editCategorySelect = document.getElementById('edit-category');
+
+            if (editParentSelect && editCategorySelect) {
+                editParentSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const parentCategory = selectedOption.getAttribute('data-category');
+
+                    if (parentCategory && parentCategory !== '') {
+                        // 选择了父项目，自动设置分类并禁用
+                        editCategorySelect.value = parentCategory;
+                        editCategorySelect.disabled = true;
+                        editCategorySelect.title = '子项目分类必须与父项目一致';
+                    } else {
+                        // 没有选择父项目（顶级项目），恢复分类选择
+                        editCategorySelect.disabled = false;
+                        editCategorySelect.title = '';
+                    }
+                });
+
+                // 初始化时检查是否已选父项目
+                if (editParentSelect.value !== '0') {
+                    editParentSelect.dispatchEvent(new Event('change'));
+                }
+            }
+
+            // 重置对话框时恢复分类选择状态
+            const addModal = document.getElementById('add-modal');
+            if (addModal) {
+                addModal.addEventListener('close', function() {
+                    if (addCategorySelect) {
+                        addCategorySelect.disabled = false;
+                        addCategorySelect.title = '';
+                    }
+                });
+            }
+
+            const editModal = document.getElementById('edit-modal');
+            if (editModal) {
+                editModal.addEventListener('close', function() {
+                    if (editCategorySelect) {
+                        editCategorySelect.disabled = false;
+                        editCategorySelect.title = '';
+                    }
+                });
+            }
+        });
 
         // ====== 子项目树形结构功能 ======
         {{ if .Projects }}

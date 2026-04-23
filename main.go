@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os" // 新增
+	"os"
 	"os/exec"
 	"runtime"
 	"time"
@@ -12,29 +12,30 @@ import (
 )
 
 func main() {
-	// 1. 检查命令行参数 (bobo dev)
+	// 检查命令行参数 (bobo dev)
 	if len(os.Args) < 2 || os.Args[1] != "dev" {
 		println("请使用 'bobo dev' 来启动服务")
 		return
 	}
 
 	InitDB()
+	// 确保程序退出前关闭数据库连接
 	defer DB.Close()
 
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 
-	// 2. 调用我们定义的路由配置函数
+	// 调用自己定义的路由配置函数
 	setupRoutes(r)
 
 	r.Run(":5050")
 }
 
-// --- 把函数放在这里 ---
+// 路由配置函数
 func setupRoutes(r *gin.Engine) {
-	// 首页：展示项目
+	// 首页展示项目
 	r.GET("/", func(c *gin.Context) {
-		// 1. 获取所有项目用于侧边栏展示
+		// 获取所有项目用于侧边栏展示
 		rows, err := DB.Query("SELECT id, name, path, command, note, category, parent_id FROM projects")
 		if err != nil {
 			c.String(http.StatusInternalServerError, "查询项目失败: "+err.Error())
@@ -50,13 +51,12 @@ func setupRoutes(r *gin.Engine) {
 		}
 		rows.Close()
 
-		// 2. 获取当前选中的项目 ID
+		// 获取当前选中的项目 ID
 		selectedID := c.Query("id")
 		var currentProject *Project
 		var versions []Version
 		if selectedID != "" {
 			for _, p := range projects {
-				// 这里简单转换一下匹配
 				if fmt.Sprintf("%d", p.ID) == selectedID {
 					currentProject = &p
 					break
@@ -86,13 +86,27 @@ func setupRoutes(r *gin.Engine) {
 		path := c.PostForm("path")
 		cmd := c.PostForm("cmd")
 		note := c.PostForm("note")
-		category := c.PostForm("category")  // 新增
+		category := c.PostForm("category")
 		parentID := c.PostForm("parent_id") // 父项目ID
 
 		// 转换 parent_id，默认为 0（顶级项目）
 		var parentIDInt int
 		if parentID != "" {
 			fmt.Sscanf(parentID, "%d", &parentIDInt)
+		}
+
+		// 如果是子项目（parent_id > 0），验证分类必须与父项目一致
+		if parentIDInt > 0 {
+			var parentCategory string
+			err := DB.QueryRow("SELECT category FROM projects WHERE id = ?", parentIDInt).Scan(&parentCategory)
+			if err != nil {
+				c.String(http.StatusNotFound, "找不到父项目")
+				return
+			}
+			if category != parentCategory {
+				c.String(http.StatusBadRequest, fmt.Sprintf("子项目的分类必须与父项目一致。父项目分类为: %s", parentCategory))
+				return
+			}
 		}
 
 		DB.Exec("INSERT INTO projects (name, path, command, note, category, parent_id) VALUES (?, ?, ?, ?, ?, ?)",
@@ -147,7 +161,7 @@ func setupRoutes(r *gin.Engine) {
 			return
 		}
 
-		// 1. 获取所有项目用于侧边栏展示
+		// 获取所有项目用于侧边栏展示
 		rows, err := DB.Query("SELECT id, name, path, command, note, category, parent_id FROM projects")
 		if err != nil {
 			c.String(http.StatusInternalServerError, "查询项目列表失败: "+err.Error())
@@ -185,6 +199,20 @@ func setupRoutes(r *gin.Engine) {
 			fmt.Sscanf(parentID, "%d", &parentIDInt)
 		}
 
+		// 如果是子项目（parent_id > 0），验证分类必须与父项目一致
+		if parentIDInt > 0 {
+			var parentCategory string
+			err := DB.QueryRow("SELECT category FROM projects WHERE id = ?", parentIDInt).Scan(&parentCategory)
+			if err != nil {
+				c.String(http.StatusNotFound, "找不到父项目: "+err.Error())
+				return
+			}
+			if category != parentCategory {
+				c.String(http.StatusBadRequest, fmt.Sprintf("子项目的分类必须与父项目一致。父项目分类为: %s", parentCategory))
+				return
+			}
+		}
+
 		_, err := DB.Exec("UPDATE projects SET name = ?, path = ?, command = ?, note = ?, category = ?, parent_id = ? WHERE id = ?", name, path, cmd, note, category, parentIDInt, id)
 		if err != nil {
 			c.String(http.StatusInternalServerError, "更新失败: "+err.Error())
@@ -210,9 +238,6 @@ func setupRoutes(r *gin.Engine) {
 			c.String(http.StatusInternalServerError, "添加版本迭代失败: "+err.Error())
 			return
 		}
-
-		// 关键修复：确保重定向到带参数的首页
-		// 使用 303 (StatusSeeOther) 强制浏览器重定向到 GET 请求的首页
 		c.Redirect(http.StatusSeeOther, "/?id="+id)
 	})
 

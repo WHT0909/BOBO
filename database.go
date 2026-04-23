@@ -35,7 +35,7 @@ func InitDB() {
 		return
 	}
 
-	// 检查并添加 parent_id 列（兼容旧数据库）
+	// 检查并添加 parent_id 列
 	var hasColumn bool
 	err = DB.QueryRow("SELECT COUNT(*) FROM pragma_table_info('projects') WHERE name = 'parent_id'").Scan(&hasColumn)
 	if err == nil && !hasColumn {
