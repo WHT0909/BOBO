@@ -100,23 +100,30 @@
         </div>
         <form method="POST" action="/add" id="add-form">
             <div class="modal-body">
-                <select name="category" id="add-category" required>
-                    <option value="" disabled selected>选择分类...</option>
-                    <option value="科研">科研</option>
-                    <option value="个人项目">个人项目</option>
-                    <option value="其他">其他</option>
-                </select>
-                <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500; margin-top: 0.5rem;">父项目（可选，留空则为顶级项目）</label>
-                <select name="parent_id" id="add-parent-id">
-                    <option value="0" selected data-category="">无（顶级项目）</option>
-                    {{ range .Projects }}
-                    <option value="{{.ID}}" data-category="{{.Category}}">{{.Name}}</option>
-                    {{ end }}
-                </select>
-                <input type="text" name="name" placeholder="项目名称" required>
-                <input type="text" name="path" placeholder="项目路径" required>
-                <input type="text" name="cmd" placeholder="启动指令">
-                <textarea name="note" placeholder="备注内容"></textarea>
+                <div class="modal-grid">
+                    <div class="modal-left">
+                        <select name="category" id="add-category" required>
+                            <option value="" disabled selected>选择分类...</option>
+                            <option value="科研">科研</option>
+                            <option value="个人项目">个人项目</option>
+                            <option value="其他">其他</option>
+                        </select>
+                        <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">父项目（可选，留空则为顶级项目）</label>
+                        <select name="parent_id" id="add-parent-id">
+                            <option value="0" selected data-category="">无（顶级项目）</option>
+                            {{ range .Projects }}
+                            <option value="{{.ID}}" data-category="{{.Category}}">{{.Name}}</option>
+                            {{ end }}
+                        </select>
+                        <input type="text" name="name" placeholder="项目名称" required>
+                        <input type="text" name="path" placeholder="项目路径" required>
+                        <input type="text" name="cmd" placeholder="启动指令">
+                    </div>
+                    <div class="modal-right">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">备注内容</label>
+                        <textarea name="note" placeholder="请输入备注内容..."></textarea>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="window.location.href='/?id={{ .EditVersion.ProjectID }}'">取消</button>
@@ -138,25 +145,32 @@
         {{ if .CurrentProject }}
         <form method="POST" action="/update/{{ .CurrentProject.ID }}" id="edit-form">
             <div class="modal-body">
-                <select name="category" id="edit-category" required>
-                    <option value="" disabled>选择分类...</option>
-                    <option value="科研" {{ if eq .CurrentProject.Category "科研" }}selected{{ end }}>科研</option>
-                    <option value="个人项目" {{ if eq .CurrentProject.Category "个人项目" }}selected{{ end }}>个人项目</option>
-                    <option value="其他" {{ if eq .CurrentProject.Category "其他" }}selected{{ end }}>其他</option>
-                </select>
-                <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500; margin-top: 0.5rem;">父项目（可选，留空则为顶级项目）</label>
-                <select name="parent_id" id="edit-parent-id">
-                    <option value="0" {{ if eq $.CurrentProject.ParentID 0 }}selected{{ end }} data-category="">无（顶级项目）</option>
-                    {{ range .Projects }}
-                    {{ if ne .ID $.CurrentProject.ID }}
-                    <option value="{{.ID}}" data-category="{{.Category}}" {{ if eq $.CurrentProject.ParentID .ID }}selected{{ end }}>{{.Name}}</option>
-                    {{ end }}
-                    {{ end }}
-                </select>
-                <input type="text" name="name" placeholder="项目名称" required value="{{ .CurrentProject.Name }}">
-                <input type="text" name="path" placeholder="项目路径" required value="{{ .CurrentProject.Path }}">
-                <input type="text" name="cmd" placeholder="启动指令" value="{{ .CurrentProject.Command }}">
-                <textarea name="note" placeholder="备注内容">{{ .CurrentProject.Note }}</textarea>
+                <div class="modal-grid">
+                    <div class="modal-left">
+                        <select name="category" id="edit-category" required>
+                            <option value="" disabled>选择分类...</option>
+                            <option value="科研" {{ if eq .CurrentProject.Category "科研" }}selected{{ end }}>科研</option>
+                            <option value="个人项目" {{ if eq .CurrentProject.Category "个人项目" }}selected{{ end }}>个人项目</option>
+                            <option value="其他" {{ if eq .CurrentProject.Category "其他" }}selected{{ end }}>其他</option>
+                        </select>
+                        <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">父项目（可选，留空则为顶级项目）</label>
+                        <select name="parent_id" id="edit-parent-id">
+                            <option value="0" {{ if eq $.CurrentProject.ParentID 0 }}selected{{ end }} data-category="">无（顶级项目）</option>
+                            {{ range .Projects }}
+                            {{ if ne .ID $.CurrentProject.ID }}
+                            <option value="{{.ID}}" data-category="{{.Category}}" {{ if eq $.CurrentProject.ParentID .ID }}selected{{ end }}>{{.Name}}</option>
+                            {{ end }}
+                            {{ end }}
+                        </select>
+                        <input type="text" name="name" placeholder="项目名称" required value="{{ .CurrentProject.Name }}">
+                        <input type="text" name="path" placeholder="项目路径" required value="{{ .CurrentProject.Path }}">
+                        <input type="text" name="cmd" placeholder="启动指令" value="{{ .CurrentProject.Command }}">
+                    </div>
+                    <div class="modal-right">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">备注内容</label>
+                        <textarea name="note" placeholder="请输入备注内容...">{{ .CurrentProject.Note }}</textarea>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="submit" class="btn-primary">确认保存</button>

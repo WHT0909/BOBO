@@ -373,7 +373,7 @@ dialog {
     border-radius: 8px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     width: 90%;
-    max-width: 500px;
+    max-width: 1000px;
     padding: 0;
 }
 
@@ -406,6 +406,29 @@ dialog::backdrop {
     padding: 1.5rem;
 }
 
+.modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.modal-left {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.modal-right {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-right textarea {
+    flex: 1;
+    min-height: 300px;
+    resize: none;
+}
+
 .modal-body select,
 .modal-body input,
 .modal-body textarea {
@@ -413,7 +436,6 @@ dialog::backdrop {
     padding: 0.75rem;
     border: 1px solid #e5e7eb;
     border-radius: 6px;
-    margin-bottom: 1rem;
     font-size: 0.95rem;
 }
 
