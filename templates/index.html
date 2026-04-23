@@ -477,17 +477,17 @@
         <aside class="sidebar">
             <h2 class="sidebar-title">Bobo Dev</h2>
 
-            <details class="sidebar-details" open>
+            <details class="sidebar-details">
                 <summary>科研项目</summary>
                 <div id="tree-research" class="tree-container"></div>
             </details>
 
-            <details class="sidebar-details" open>
+            <details class="sidebar-details">
                 <summary>个人项目</summary>
                 <div id="tree-personal" class="tree-container"></div>
             </details>
 
-            <details class="sidebar-details" open>
+            <details class="sidebar-details">
                 <summary>其他项目</summary>
                 <div id="tree-other" class="tree-container"></div>
             </details>
@@ -892,6 +892,37 @@
             window.openAddChildModal = openAddChildModal;
         })();
         {{ end }}
+
+        // ====== 菜单栏展开状态记忆功能 ======
+        document.addEventListener('DOMContentLoaded', function() {
+            const STORAGE_KEY = 'sidebar_details_state';
+
+            function saveState() {
+                const state = {};
+                document.querySelectorAll('.sidebar-details').forEach((details, index) => {
+                    state[index] = details.hasAttribute('open');
+                });
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            }
+
+            function restoreState() {
+                const saved = sessionStorage.getItem(STORAGE_KEY);
+                if (!saved) return;
+                const state = JSON.parse(saved);
+                document.querySelectorAll('.sidebar-details').forEach((details, index) => {
+                    if (state[index]) {
+                        details.setAttribute('open', '');
+                    } else {
+                        details.removeAttribute('open');
+                    }
+                });
+            }
+
+            restoreState();
+            document.querySelectorAll('.sidebar-details').forEach(details => {
+                details.addEventListener('toggle', saveState);
+            });
+        });
     </script>
 </body>
 </html>
