@@ -37,9 +37,9 @@
         <main class="main-content">
             <!-- 顶部菜单栏 -->
             <div class="tabs-bar">
-                <a href="/" class="tab-btn active">详情</a>
-                <a href="/terminal" class="tab-btn">终端</a>
-                <a href="/about" class="tab-btn">关于</a>
+                <a href="{{ if .CurrentProject }}/?id={{ .CurrentProject.ID }}{{ else }}/{{ end }}" class="tab-btn active" style="text-decoration: none;">详情</a>
+                <a href="{{ if .CurrentProject }}/terminal?id={{ .CurrentProject.ID }}{{ else }}/terminal{{ end }}" class="tab-btn" style="text-decoration: none;">终端</a>
+                <a href="{{ if .CurrentProject }}/about?id={{ .CurrentProject.ID }}{{ else }}/about{{ end }}" class="tab-btn" style="text-decoration: none;">关于</a>
             </div>
             
             <!-- 详情页面 -->

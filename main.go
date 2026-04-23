@@ -99,8 +99,21 @@ func setupRoutes(r *gin.Engine) {
 		}
 		rows.Close()
 
+		// 获取当前选中的项目 ID
+		selectedID := c.Query("id")
+		var currentProject *Project
+		if selectedID != "" {
+			for _, p := range projects {
+				if fmt.Sprintf("%d", p.ID) == selectedID {
+					currentProject = &p
+					break
+				}
+			}
+		}
+
 		c.HTML(http.StatusOK, "terminal.html", gin.H{
-			"Projects": projects,
+			"Projects":       projects,
+			"CurrentProject": currentProject,
 		})
 	})
 
@@ -122,8 +135,21 @@ func setupRoutes(r *gin.Engine) {
 		}
 		rows.Close()
 
+		// 获取当前选中的项目 ID
+		selectedID := c.Query("id")
+		var currentProject *Project
+		if selectedID != "" {
+			for _, p := range projects {
+				if fmt.Sprintf("%d", p.ID) == selectedID {
+					currentProject = &p
+					break
+				}
+			}
+		}
+
 		c.HTML(http.StatusOK, "about.html", gin.H{
-			"Projects": projects,
+			"Projects":       projects,
+			"CurrentProject": currentProject,
 		})
 	})
 

@@ -131,9 +131,12 @@ document.addEventListener('DOMContentLoaded', function() {
             toggle.innerHTML = hasChildren ? '▼' : ''; 
             contentDiv.appendChild(toggle);
 
-            // 标题链接
+            // 标题链接 - 保持在当前页面，只添加 id 参数
             const link = document.createElement('a');
-            link.href = '/?id=' + node.id;
+            const currentPath = window.location.pathname;
+            const hasQuery = window.location.search.length > 0;
+            const separator = hasQuery ? '&' : '?';
+            link.href = currentPath + separator + 'id=' + node.id;
             link.textContent = node.name;
             if (isCurrent) link.classList.add('active');
             link.style.flex = '1';
