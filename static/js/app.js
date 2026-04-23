@@ -273,3 +273,28 @@ document.addEventListener('DOMContentLoaded', function() {
         document.removeEventListener('mouseup', onMouseUp);
     }
 });
+
+// ====== 6. 标签页切换功能 ======
+document.addEventListener('DOMContentLoaded', function() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const tabName = this.getAttribute('data-tab');
+            
+            // 移除所有按钮的 active 状态
+            tabBtns.forEach(b => b.classList.remove('active'));
+            // 移除所有内容区域的 active 状态
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // 给当前按钮添加 active 状态
+            this.classList.add('active');
+            // 给对应的内容区域添加 active 状态
+            const activeContent = document.getElementById('tab-' + tabName);
+            if (activeContent) {
+                activeContent.classList.add('active');
+            }
+        });
+    });
+});

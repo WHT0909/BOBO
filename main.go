@@ -81,6 +81,52 @@ func setupRoutes(r *gin.Engine) {
 		})
 	})
 
+	// 终端页面
+	r.GET("/terminal", func(c *gin.Context) {
+		// 获取所有项目用于侧边栏展示
+		rows, err := DB.Query("SELECT id, name, path, command, note, category, parent_id FROM projects")
+		if err != nil {
+			c.String(http.StatusInternalServerError, "查询项目失败: "+err.Error())
+			return
+		}
+		var projects []Project
+		for rows.Next() {
+			var p Project
+			if err := rows.Scan(&p.ID, &p.Name, &p.Path, &p.Command, &p.Note, &p.Category, &p.ParentID); err != nil {
+				continue
+			}
+			projects = append(projects, p)
+		}
+		rows.Close()
+
+		c.HTML(http.StatusOK, "terminal.html", gin.H{
+			"Projects": projects,
+		})
+	})
+
+	// 关于页面
+	r.GET("/about", func(c *gin.Context) {
+		// 获取所有项目用于侧边栏展示
+		rows, err := DB.Query("SELECT id, name, path, command, note, category, parent_id FROM projects")
+		if err != nil {
+			c.String(http.StatusInternalServerError, "查询项目失败: "+err.Error())
+			return
+		}
+		var projects []Project
+		for rows.Next() {
+			var p Project
+			if err := rows.Scan(&p.ID, &p.Name, &p.Path, &p.Command, &p.Note, &p.Category, &p.ParentID); err != nil {
+				continue
+			}
+			projects = append(projects, p)
+		}
+		rows.Close()
+
+		c.HTML(http.StatusOK, "about.html", gin.H{
+			"Projects": projects,
+		})
+	})
+
 	// 添加项目接口
 	r.POST("/add", func(c *gin.Context) {
 		name := c.PostForm("name")

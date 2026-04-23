@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>终端 - Bobo 项目管理面板</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧菜单栏 -->
+        <aside class="sidebar" id="sidebar">
+            <h2 class="sidebar-title">Bobo 项目管理面板</h2>
+
+            <details class="sidebar-details" data-category="科研">
+                <summary>科研项目</summary>
+                <div id="tree-research" class="tree-container"></div>
+            </details>
+
+            <details class="sidebar-details" data-category="个人项目">
+                <summary>个人项目</summary>
+                <div id="tree-personal" class="tree-container"></div>
+            </details>
+
+            <details class="sidebar-details" data-category="其他">
+                <summary>其他项目</summary>
+                <div id="tree-other" class="tree-container"></div>
+            </details>
+
+            <div class="add-btn">
+                <a href="#" onclick="document.getElementById('add-modal').showModal(); return false;">+ 新增项目</a>
+            </div>
+        </aside>
+        <div class="sidebar-resizer" id="sidebarResizer"></div>
+        
+        <!-- 右侧内容区 -->
+        <main class="main-content">
+            <!-- 顶部菜单栏 -->
+            <div class="tabs-bar">
+                <a href="/" class="tab-btn">详情</a>
+                <a href="/terminal" class="tab-btn active">终端</a>
+                <a href="/about" class="tab-btn">关于</a>
+            </div>
+            
+            <!-- 终端页面 -->
+            <div class="tab-content active" id="tab-terminal">
+                <div class="terminal-page">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span class="dot red"></span>
+                            <span class="dot yellow"></span>
+                            <span class="dot green"></span>
+                        </div>
+                        <span class="terminal-title">Terminal</span>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="terminal-line">Welcome to Bobo 终端模拟</div>
+                        <div class="terminal-line">$ 系统已就绪</div>
+                        <div class="terminal-line">$ 此为示例内容，实际功能待开发</div>
+                        <div class="terminal-input-line">
+                            <span class="terminal-prompt">$ </span>
+                            <span class="terminal-cursor">_</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- 新增项目对话框 -->
+    <dialog id="add-modal">
+        <div class="modal-header">
+            <h3>新增项目</h3>
+            <button class="modal-close" onclick="document.getElementById('add-modal').close();">&times;</button>
+        </div>
+        <form method="POST" action="/add" id="add-form">
+            <div class="modal-body">
+                <div class="modal-grid">
+                    <div class="modal-left">
+                        <select name="category" id="add-category" required>
+                            <option value="" disabled selected>选择分类...</option>
+                            <option value="科研">科研</option>
+                            <option value="个人项目">个人项目</option>
+                            <option value="其他">其他</option>
+                        </select>
+                        <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">父项目（可选，留空则为顶级项目）</label>
+                        <select name="parent_id" id="add-parent-id">
+                            <option value="0" selected data-category="">无（顶级项目）</option>
+                            {{ range .Projects }}
+                            <option value="{{.ID}}" data-category="{{.Category}}">{{.Name}}</option>
+                            {{ end }}
+                        </select>
+                        <input type="text" name="name" placeholder="项目名称" required>
+                        <input type="text" name="path" placeholder="项目路径" required>
+                        <input type="text" name="cmd" placeholder="启动指令">
+                    </div>
+                    <div class="modal-right">
+                        <label style="display: block; margin-bottom: 0.5rem; color: #374151; font-weight: 500;">备注内容</label>
+                        <textarea name="note" placeholder="请输入备注内容..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="window.location.href='/?id={{ .EditVersion.ProjectID }}'">取消</button>
+                <button type="submit" class="btn-primary">确认保存</button>
+            </div>
+        </form>
+    </dialog>
+    
+    <script>
+        // 将 Go 后端的数据转化为 JS 全局变量
+        window.AppData = {
+            editMode: {{ if .EditMode }}true{{ else }}false{{ end }},
+            editVersionMode: {{ if .EditVersionMode }}true{{ else }}false{{ end }},
+            currentProjectId: {{ if .CurrentProject }}{{ .CurrentProject.ID }}{{ else }}0{{ end }},
+            projects: [
+                {{ range .Projects }}
+                { id: {{.ID}}, name: "{{.Name}}", category: "{{.Category}}", parentId: {{.ParentID}} },
+                {{ end }}
+            ]
+        };
+    </script>
+    <script src="/static/js/app.js"></script>
+    
+</body>
+</html>

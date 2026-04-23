@@ -35,60 +35,70 @@
         
         <!-- 右侧内容区 -->
         <main class="main-content">
-            {{ if .CurrentProject }}
-            <div class="project-detail">
-                <span class="tag">{{ .CurrentProject.Category }}</span>
-                <h1>{{ .CurrentProject.Name }}</h1>
-                <hr>
-                
-                <div>
-                    <h3>项目路径</h3>
-                    <p><code>{{ .CurrentProject.Path }}</code></p>
-                </div>
-                
-                <div>
-                    <h3>启动指令</h3>
-                    <p><code>{{ .CurrentProject.Command }}</code></p>
-                </div>
-                
-                <div>
-                    <h3>备注信息</h3>
-                    <div class="note-box">{{ .CurrentProject.Note }}</div>
-                </div>
-                
-                <div class="button-group">
-                    <a href="/run/{{ .CurrentProject.ID }}" class="btn-primary">立即启动服务</a>
-                    <a href="#" onclick="document.getElementById('edit-modal').showModal(); return false;" class="btn-secondary">修改项目</a>
-                    <a href="#" onclick="document.getElementById('version-modal').showModal(); return false;" class="btn-secondary">版本迭代</a>
-                    <a href="/delete/{{ .CurrentProject.ID }}" class="btn-danger">删除项目</a>
-                </div>
-                
-                <!-- 版本迭代展示 -->
-                {{ if .Versions }}
-                <div class="version-section">
-                    <h3>版本迭代</h3>
-                    {{ range .Versions }}
-                    <div class="version-item">
-                        <div class="version-time">更新时间：{{ .UpdateTime }}</div>
-                        <div class="version-desc">更新描述：{{ .Description }}</div>
-                        <div class="version-actions">
-                            <a href="/edit-version/{{ .ID }}" class="btn-edit" title="编辑">编辑</a>
-                            <a href="/delete-version/{{ .ID }}" class="btn-delete" onclick="return confirm('确定要删除这条版本记录吗？')" title="删除">删除</a>
+            <!-- 顶部菜单栏 -->
+            <div class="tabs-bar">
+                <a href="/" class="tab-btn active">详情</a>
+                <a href="/terminal" class="tab-btn">终端</a>
+                <a href="/about" class="tab-btn">关于</a>
+            </div>
+            
+            <!-- 详情页面 -->
+            <div class="tab-content active" id="tab-detail">
+                {{ if .CurrentProject }}
+                <div class="project-detail">
+                    <span class="tag">{{ .CurrentProject.Category }}</span>
+                    <h1>{{ .CurrentProject.Name }}</h1>
+                    <hr>
+                    
+                    <div>
+                        <h3>项目路径</h3>
+                        <p><code>{{ .CurrentProject.Path }}</code></p>
+                    </div>
+                    
+                    <div>
+                        <h3>启动指令</h3>
+                        <p><code>{{ .CurrentProject.Command }}</code></p>
+                    </div>
+                    
+                    <div>
+                        <h3>备注信息</h3>
+                        <div class="note-box">{{ .CurrentProject.Note }}</div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <a href="/run/{{ .CurrentProject.ID }}" class="btn-primary">立即启动服务</a>
+                        <a href="#" onclick="document.getElementById('edit-modal').showModal(); return false;" class="btn-secondary">修改项目</a>
+                        <a href="#" onclick="document.getElementById('version-modal').showModal(); return false;" class="btn-secondary">版本迭代</a>
+                        <a href="/delete/{{ .CurrentProject.ID }}" class="btn-danger">删除项目</a>
+                    </div>
+                    
+                    <!-- 版本迭代展示 -->
+                    {{ if .Versions }}
+                    <div class="version-section">
+                        <h3>版本迭代</h3>
+                        {{ range .Versions }}
+                        <div class="version-item">
+                            <div class="version-time">更新时间：{{ .UpdateTime }}</div>
+                            <div class="version-desc">更新描述：{{ .Description }}</div>
+                            <div class="version-actions">
+                                <a href="/edit-version/{{ .ID }}" class="btn-edit" title="编辑">编辑</a>
+                                <a href="/delete-version/{{ .ID }}" class="btn-delete" onclick="return confirm('确定要删除这条版本记录吗？')" title="删除">删除</a>
+                            </div>
                         </div>
+                        {{ end }}
                     </div>
                     {{ end }}
                 </div>
+                {{ else }}
+                <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 1a2 2 0 0 1 2 2v2H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                    </svg>
+                    <h2>请在左侧选择一个项目</h2>
+                    <p>选择项目后将显示详细信息和操作选项</p>
+                </div>
                 {{ end }}
             </div>
-            {{ else }}
-            <div class="empty-state">
-                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8 1a2 2 0 0 1 2 2v2H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
-                </svg>
-                <h2>请在左侧选择一个项目</h2>
-                <p>选择项目后将显示详细信息和操作选项</p>
-            </div>
-            {{ end }}
         </main>
     </div>
     
@@ -235,413 +245,5 @@
     </script>
     <script src="/static/js/app.js"></script>
     
-    <!-- <script>
-        // 如果处于编辑模式，自动打开编辑对话框
-        {{ if .EditMode }}
-        document.addEventListener('DOMContentLoaded', function() {
-            const editModal = document.getElementById('edit-modal');
-            if (editModal && !editModal.hasAttribute('open')) {
-                editModal.showModal();
-            }
-        });
-        {{ end }}
-
-        // 如果处于版本编辑模式，自动打开编辑版本对话框
-        {{ if .EditVersionMode }}
-        document.addEventListener('DOMContentLoaded', function() {
-            const editVersionModal = document.getElementById('edit-version-modal');
-            if (editVersionModal) {
-                // 使用 showModal() 确保以模态方式显示
-                editVersionModal.showModal();
-            }
-        });
-        {{ end }}
-
-        // ====== 子项目分类自动同步功能 ======
-        document.addEventListener('DOMContentLoaded', function() {
-            // 新增项目对话框：父项目选择变化时自动填充分类
-            const addParentSelect = document.getElementById('add-parent-id');
-            const addCategorySelect = document.getElementById('add-category');
-            let addCategoryLocked = false;
-
-            if (addParentSelect && addCategorySelect) {
-                addParentSelect.addEventListener('change', function() {
-                    const selectedOption = this.options[this.selectedIndex];
-                    const parentCategory = selectedOption.getAttribute('data-category');
-
-                    if (parentCategory && parentCategory !== '') {
-                        // 选择了父项目，自动设置分类
-                        addCategorySelect.value = parentCategory;
-                        addCategoryLocked = true;
-                        addCategorySelect.style.backgroundColor = '#f3f4f6';
-                        addCategorySelect.style.cursor = 'not-allowed';
-                        addCategorySelect.title = '子项目分类必须与父项目一致';
-                    } else {
-                        // 没有选择父项目（顶级项目），恢复分类选择
-                        addCategoryLocked = false;
-                        addCategorySelect.style.backgroundColor = '';
-                        addCategorySelect.style.cursor = '';
-                        addCategorySelect.title = '';
-                    }
-                });
-
-                // 防止用户在选择父项目后修改分类
-                addCategorySelect.addEventListener('mousedown', function(e) {
-                    if (addCategoryLocked) {
-                        e.preventDefault();
-                    }
-                });
-                addCategorySelect.addEventListener('keydown', function(e) {
-                    if (addCategoryLocked) {
-                        e.preventDefault();
-                    }
-                });
-
-                // 初始化时检查是否已预选父项目
-                if (addParentSelect.value !== '0') {
-                    addParentSelect.dispatchEvent(new Event('change'));
-                }
-            }
-
-            // 编辑项目对话框：父项目选择变化时自动填充分类
-            const editParentSelect = document.getElementById('edit-parent-id');
-            const editCategorySelect = document.getElementById('edit-category');
-            let editCategoryLocked = false;
-
-            if (editParentSelect && editCategorySelect) {
-                editParentSelect.addEventListener('change', function() {
-                    const selectedOption = this.options[this.selectedIndex];
-                    const parentCategory = selectedOption.getAttribute('data-category');
-
-                    if (parentCategory && parentCategory !== '') {
-                        // 选择了父项目，自动设置分类
-                        editCategorySelect.value = parentCategory;
-                        editCategoryLocked = true;
-                        editCategorySelect.style.backgroundColor = '#f3f4f6';
-                        editCategorySelect.style.cursor = 'not-allowed';
-                        editCategorySelect.title = '子项目分类必须与父项目一致';
-                    } else {
-                        // 没有选择父项目（顶级项目），恢复分类选择
-                        editCategoryLocked = false;
-                        editCategorySelect.style.backgroundColor = '';
-                        editCategorySelect.style.cursor = '';
-                        editCategorySelect.title = '';
-                    }
-                });
-
-                // 防止用户在选择父项目后修改分类
-                editCategorySelect.addEventListener('mousedown', function(e) {
-                    if (editCategoryLocked) {
-                        e.preventDefault();
-                    }
-                });
-                editCategorySelect.addEventListener('keydown', function(e) {
-                    if (editCategoryLocked) {
-                        e.preventDefault();
-                    }
-                });
-
-                // 初始化时检查是否已选父项目
-                if (editParentSelect.value !== '0') {
-                    editParentSelect.dispatchEvent(new Event('change'));
-                }
-            }
-
-            // 重置对话框时恢复分类选择状态
-            const addModal = document.getElementById('add-modal');
-            if (addModal) {
-                addModal.addEventListener('close', function() {
-                    if (addCategorySelect) {
-                        addCategoryLocked = false;
-                        addCategorySelect.style.backgroundColor = '';
-                        addCategorySelect.style.cursor = '';
-                        addCategorySelect.title = '';
-                    }
-                });
-            }
-
-            const editModal = document.getElementById('edit-modal');
-            if (editModal) {
-                editModal.addEventListener('close', function() {
-                    if (editCategorySelect) {
-                        editCategoryLocked = false;
-                        editCategorySelect.style.backgroundColor = '';
-                        editCategorySelect.style.cursor = '';
-                        editCategorySelect.title = '';
-                    }
-                });
-            }
-        });
-
-        // ====== 子项目树形结构功能 ======
-        {{ if .Projects }}
-        (function() {
-            // 从 Go 模板获取项目数据
-            const projects = [
-                {{ range .Projects }}
-                { id: {{.ID}}, name: "{{.Name}}", category: "{{.Category}}", parentId: {{.ParentID}} },
-                {{ end }}
-            ];
-
-            const currentProjectId = {{ if .CurrentProject }}{{ .CurrentProject.ID }}{{ else }}0{{ end }};
-            const TREE_STORAGE_KEY = 'tree_nodes_state';
-
-            // 保存树节点状态
-            function saveTreeState() {
-                const state = {};
-                document.querySelectorAll('.tree-children').forEach(childrenDiv => {
-                    const nodeId = childrenDiv.getAttribute('data-node-id');
-                    if (nodeId) {
-                        state[nodeId] = childrenDiv.style.display === 'block';
-                    }
-                });
-                sessionStorage.setItem(TREE_STORAGE_KEY, JSON.stringify(state));
-            }
-
-            // 恢复树节点状态
-            function restoreTreeState() {
-                const saved = sessionStorage.getItem(TREE_STORAGE_KEY);
-                if (!saved) return;
-                const state = JSON.parse(saved);
-                document.querySelectorAll('.tree-children').forEach(childrenDiv => {
-                    const nodeId = childrenDiv.getAttribute('data-node-id');
-                    if (nodeId && state.hasOwnProperty(nodeId)) {
-                        const toggle = childrenDiv.previousElementSibling?.querySelector('.tree-toggle');
-                        if (toggle) {
-                            if (state[nodeId]) {
-                                childrenDiv.style.display = 'block';
-                                toggle.innerHTML = '▼';
-                            } else {
-                                childrenDiv.style.display = 'none';
-                                toggle.innerHTML = '▶';
-                            }
-                        }
-                    }
-                });
-            }
-
-            // 构建树形结构
-            function buildTree(items, parentId = 0) {
-                return items
-                    .filter(item => item.parentId === parentId)
-                    .map(item => ({
-                        ...item,
-                        children: buildTree(items, item.id)
-                    }));
-            }
-
-            // 渲染树节点
-            function renderTree(nodes, container, level = 0) {
-                nodes.forEach(node => {
-                    const hasChildren = node.children && node.children.length > 0;
-                    const isCurrent = node.id === currentProjectId;
-
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'tree-item';
-
-                    const contentDiv = document.createElement('div');
-                    contentDiv.className = 'tree-item-content';
-
-                    // 展开/折叠按钮（仅当有子项目时显示）
-                    let toggle = null;
-                    if (hasChildren) {
-                        toggle = document.createElement('span');
-                        toggle.className = 'tree-toggle';
-                        toggle.innerHTML = '▼';
-                        contentDiv.appendChild(toggle);
-                    } else {
-                        const spacer = document.createElement('span');
-                        spacer.className = 'tree-toggle';
-                        spacer.innerHTML = '';
-                        contentDiv.appendChild(spacer);
-                    }
-
-                    // 项目链接
-                    const link = document.createElement('a');
-                    link.href = '/?id=' + node.id;
-                    link.textContent = node.name;
-                    if (isCurrent) link.classList.add('active');
-                    link.style.flex = '1';
-                    contentDiv.appendChild(link);
-
-                    // 添加子项目按钮
-                    const addChildBtn = document.createElement('span');
-                    addChildBtn.className = 'add-child-btn';
-                    addChildBtn.textContent = '+ 子项目';
-                    addChildBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        openAddChildModal(node.id);
-                    };
-                    contentDiv.appendChild(addChildBtn);
-
-                    itemDiv.appendChild(contentDiv);
-                    container.appendChild(itemDiv);
-
-                    // 递归渲染子项目
-                    let childrenDiv = null;
-                    if (hasChildren) {
-                        childrenDiv = document.createElement('div');
-                        childrenDiv.className = 'tree-children';
-                        childrenDiv.setAttribute('data-node-id', node.id);
-                        childrenDiv.style.display = 'block'; // 默认展开
-                        renderTree(node.children, childrenDiv, level + 1);
-                        container.appendChild(childrenDiv);
-
-                        // 绑定展开/折叠事件
-                        if (toggle) {
-                            toggle.onclick = () => toggleNode(toggle, childrenDiv);
-                        }
-                    }
-                });
-            }
-
-            // 切换节点展开/折叠状态
-            function toggleNode(toggle, childrenDiv) {
-                if (childrenDiv.style.display === 'none') {
-                    childrenDiv.style.display = 'block';
-                    toggle.innerHTML = '▼';
-                } else {
-                    childrenDiv.style.display = 'none';
-                    toggle.innerHTML = '▶';
-                }
-                saveTreeState();
-            }
-
-            // 打开添加子项目的模态框
-            function openAddChildModal(parentId) {
-                const modal = document.getElementById('add-modal');
-                const parentSelect = modal.querySelector('select[name="parent_id"]');
-                if (parentSelect) {
-                    parentSelect.value = parentId;
-                    // 触发 change 事件以同步分类
-                    parentSelect.dispatchEvent(new Event('change'));
-                }
-                modal.showModal();
-            }
-
-            // 初始化树形结构
-            document.addEventListener('DOMContentLoaded', function() {
-                // 按分类构建并渲染树
-                const categories = ['科研', '个人项目', '其他'];
-                const containers = ['tree-research', 'tree-personal', 'tree-other'];
-
-                categories.forEach((category, index) => {
-                    const categoryProjects = projects.filter(p => p.category === category);
-                    const treeData = buildTree(categoryProjects);
-                    const container = document.getElementById(containers[index]);
-                    if (container && treeData.length > 0) {
-                        renderTree(treeData, container);
-                    }
-                });
-
-                // 恢复树节点状态
-                restoreTreeState();
-            });
-
-            // 将 openAddChildModal 函数暴露到全局作用域
-            window.openAddChildModal = openAddChildModal;
-        })();
-        {{ end }}
-
-        // ====== 菜单栏展开状态记忆功能 ======
-        document.addEventListener('DOMContentLoaded', function() {
-            const STORAGE_KEY = 'sidebar_details_state';
-
-            function saveState() {
-                const state = {};
-                document.querySelectorAll('.sidebar-details').forEach((details, index) => {
-                    state[index] = details.hasAttribute('open');
-                });
-                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-            }
-
-            function restoreState() {
-                const saved = sessionStorage.getItem(STORAGE_KEY);
-                if (!saved) return;
-                const state = JSON.parse(saved);
-                document.querySelectorAll('.sidebar-details').forEach((details, index) => {
-                    if (state[index]) {
-                        details.setAttribute('open', '');
-                    } else {
-                        details.removeAttribute('open');
-                    }
-                });
-            }
-
-            restoreState();
-            document.querySelectorAll('.sidebar-details').forEach(details => {
-                details.addEventListener('toggle', saveState);
-            });
-        });
-
-        // ====== 菜单栏宽度调整功能 ======
-        document.addEventListener('DOMContentLoaded', function() {
-            const SIDEBAR_WIDTH_KEY = 'sidebar_width';
-            const sidebar = document.getElementById('sidebar');
-            const resizer = document.getElementById('sidebarResizer');
-            
-            let isResizing = false;
-            let startX = 0;
-            let startWidth = 0;
-
-            // 恢复保存的宽度
-            function restoreSidebarWidth() {
-                const savedWidth = localStorage.getItem(SIDEBAR_WIDTH_KEY);
-                if (savedWidth) {
-                    sidebar.style.width = savedWidth + 'px';
-                } else {
-                    sidebar.style.width = '260px'; // 默认宽度
-                }
-            }
-
-            // 保存宽度
-            function saveSidebarWidth() {
-                localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebar.offsetWidth);
-            }
-
-            // 开始拖拽
-            resizer.addEventListener('mousedown', function(e) {
-                isResizing = true;
-                startX = e.clientX;
-                startWidth = sidebar.offsetWidth;
-                
-                // 添加全局事件监听
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-                
-                // 防止选中文字
-                e.preventDefault();
-                e.stopPropagation();
-            });
-
-            // 拖拽过程
-            function onMouseMove(e) {
-                if (!isResizing) return;
-                
-                const deltaX = e.clientX - startX;
-                let newWidth = startWidth + deltaX;
-                
-                // 限制宽度范围
-                const minWidth = 200;
-                const maxWidth = 600;
-                newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
-                
-                sidebar.style.width = newWidth + 'px';
-            }
-
-            // 结束拖拽
-            function onMouseUp() {
-                isResizing = false;
-                saveSidebarWidth();
-                
-                // 移除全局事件监听
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-            }
-
-            // 初始化
-            restoreSidebarWidth();
-        });
-    </script> -->
 </body>
 </html>

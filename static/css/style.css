@@ -548,3 +548,164 @@ dialog::backdrop {
     color: #3b82f6;
     background-color: #eff6ff;
 }
+
+/* 菜单栏样式 */
+.tabs-bar {
+    display: flex;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.5rem 1rem 0;
+}
+
+.tab-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px 6px 0 0;
+    transition: all 0.2s ease;
+    margin-right: 0.25rem;
+}
+
+.tab-btn:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.tab-btn.active {
+    background: white;
+    color: #1f2937;
+    border-bottom: 2px solid #3b82f6;
+}
+
+/* 标签页内容区域 */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* 终端页面样式 */
+.terminal-page {
+    padding: 1.5rem;
+    height: calc(100vh - 50px);
+}
+
+.terminal-header {
+    background: #374151;
+    padding: 0.75rem 1rem;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    align-items: center;
+}
+
+.terminal-dots {
+    display: flex;
+    gap: 0.5rem;
+    margin-right: 1rem;
+}
+
+.terminal-dots .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.terminal-dots .dot.red {
+    background: #ef4444;
+}
+
+.terminal-dots .dot.yellow {
+    background: #f59e0b;
+}
+
+.terminal-dots .dot.green {
+    background: #10b981;
+}
+
+.terminal-title {
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+.terminal-body {
+    background: #1f2937;
+    padding: 1.5rem;
+    border-radius: 0 0 8px 8px;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    color: #d1d5db;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    min-height: 400px;
+}
+
+.terminal-line {
+    margin-bottom: 0.5rem;
+}
+
+.terminal-input-line {
+    display: flex;
+    align-items: center;
+}
+
+.terminal-prompt {
+    color: #10b981;
+    margin-right: 0.5rem;
+}
+
+.terminal-cursor {
+    animation: blink 1s infinite;
+    color: #f59e0b;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* 关于页面样式 */
+.about-page {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.about-page h2 {
+    color: #1f2937;
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 0.75rem;
+}
+
+.about-section {
+    margin-bottom: 2rem;
+}
+
+.about-section h3 {
+    color: #374151;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.about-section p {
+    color: #4b5563;
+    line-height: 1.7;
+    margin-bottom: 0.5rem;
+}
+
+.about-section ul {
+    list-style-position: inside;
+    color: #4b5563;
+    line-height: 2;
+}
+
+.about-section li {
+    padding-left: 0.5rem;
+}
