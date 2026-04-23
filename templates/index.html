@@ -25,7 +25,8 @@
         
         /* 左侧菜单栏 */
         .sidebar {
-            width: 260px;
+            min-width: 200px;
+            max-width: 600px;
             background: #ffffff;
             border-right: 1px solid #e5e7eb;
             padding: 1rem;
@@ -34,6 +35,23 @@
             overflow-y: auto;
             box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
             flex-shrink: 0;
+        }
+
+        /* 分隔条 */
+        .sidebar-resizer {
+            width: 6px;
+            background: transparent;
+            cursor: col-resize;
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+
+        .sidebar-resizer:hover {
+            background: #e5e7eb;
+        }
+
+        .sidebar-resizer:active {
+            background: #3b82f6;
         }
         
         .sidebar-title {
@@ -474,28 +492,29 @@
 <body>
     <div class="container">
         <!-- 左侧菜单栏 -->
-        <aside class="sidebar">
-            <h2 class="sidebar-title">Bobo Dev</h2>
+            <aside class="sidebar" id="sidebar">
+                <h2 class="sidebar-title">Bobo Dev</h2>
 
-            <details class="sidebar-details">
-                <summary>科研项目</summary>
-                <div id="tree-research" class="tree-container"></div>
-            </details>
+                <details class="sidebar-details">
+                    <summary>科研项目</summary>
+                    <div id="tree-research" class="tree-container"></div>
+                </details>
 
-            <details class="sidebar-details">
-                <summary>个人项目</summary>
-                <div id="tree-personal" class="tree-container"></div>
-            </details>
+                <details class="sidebar-details">
+                    <summary>个人项目</summary>
+                    <div id="tree-personal" class="tree-container"></div>
+                </details>
 
-            <details class="sidebar-details">
-                <summary>其他项目</summary>
-                <div id="tree-other" class="tree-container"></div>
-            </details>
+                <details class="sidebar-details">
+                    <summary>其他项目</summary>
+                    <div id="tree-other" class="tree-container"></div>
+                </details>
 
-            <div class="add-btn">
-                <a href="#" onclick="document.getElementById('add-modal').showModal(); return false;">+ 新增项目</a>
-            </div>
-        </aside>
+                <div class="add-btn">
+                    <a href="#" onclick="document.getElementById('add-modal').showModal(); return false;">+ 新增项目</a>
+                </div>
+            </aside>
+            <div class="sidebar-resizer" id="sidebarResizer"></div>
         
         <!-- 右侧内容区 -->
         <main class="main-content">
@@ -782,6 +801,41 @@
             ];
 
             const currentProjectId = {{ if .CurrentProject }}{{ .CurrentProject.ID }}{{ else }}0{{ end }};
+            const TREE_STORAGE_KEY = 'tree_nodes_state';
+
+            // 保存树节点状态
+            function saveTreeState() {
+                const state = {};
+                document.querySelectorAll('.tree-children').forEach(childrenDiv => {
+                    const nodeId = childrenDiv.getAttribute('data-node-id');
+                    if (nodeId) {
+                        state[nodeId] = childrenDiv.style.display === 'block';
+                    }
+                });
+                sessionStorage.setItem(TREE_STORAGE_KEY, JSON.stringify(state));
+            }
+
+            // 恢复树节点状态
+            function restoreTreeState() {
+                const saved = sessionStorage.getItem(TREE_STORAGE_KEY);
+                if (!saved) return;
+                const state = JSON.parse(saved);
+                document.querySelectorAll('.tree-children').forEach(childrenDiv => {
+                    const nodeId = childrenDiv.getAttribute('data-node-id');
+                    if (nodeId && state.hasOwnProperty(nodeId)) {
+                        const toggle = childrenDiv.previousElementSibling?.querySelector('.tree-toggle');
+                        if (toggle) {
+                            if (state[nodeId]) {
+                                childrenDiv.style.display = 'block';
+                                toggle.innerHTML = '▼';
+                            } else {
+                                childrenDiv.style.display = 'none';
+                                toggle.innerHTML = '▶';
+                            }
+                        }
+                    }
+                });
+            }
 
             // 构建树形结构
             function buildTree(items, parentId = 0) {
@@ -806,11 +860,11 @@
                     contentDiv.className = 'tree-item-content';
 
                     // 展开/折叠按钮（仅当有子项目时显示）
+                    let toggle = null;
                     if (hasChildren) {
-                        const toggle = document.createElement('span');
+                        toggle = document.createElement('span');
                         toggle.className = 'tree-toggle';
                         toggle.innerHTML = '▼';
-                        toggle.onclick = () => toggleNode(toggle, childrenDiv);
                         contentDiv.appendChild(toggle);
                     } else {
                         const spacer = document.createElement('span');
@@ -841,12 +895,19 @@
                     container.appendChild(itemDiv);
 
                     // 递归渲染子项目
+                    let childrenDiv = null;
                     if (hasChildren) {
-                        const childrenDiv = document.createElement('div');
+                        childrenDiv = document.createElement('div');
                         childrenDiv.className = 'tree-children';
+                        childrenDiv.setAttribute('data-node-id', node.id);
                         childrenDiv.style.display = 'block'; // 默认展开
                         renderTree(node.children, childrenDiv, level + 1);
                         container.appendChild(childrenDiv);
+
+                        // 绑定展开/折叠事件
+                        if (toggle) {
+                            toggle.onclick = () => toggleNode(toggle, childrenDiv);
+                        }
                     }
                 });
             }
@@ -860,6 +921,7 @@
                     childrenDiv.style.display = 'none';
                     toggle.innerHTML = '▶';
                 }
+                saveTreeState();
             }
 
             // 打开添加子项目的模态框
@@ -886,6 +948,9 @@
                         renderTree(treeData, container);
                     }
                 });
+
+                // 恢复树节点状态
+                restoreTreeState();
             });
 
             // 将 openAddChildModal 函数暴露到全局作用域
@@ -922,6 +987,75 @@
             document.querySelectorAll('.sidebar-details').forEach(details => {
                 details.addEventListener('toggle', saveState);
             });
+        });
+
+        // ====== 菜单栏宽度调整功能 ======
+        document.addEventListener('DOMContentLoaded', function() {
+            const SIDEBAR_WIDTH_KEY = 'sidebar_width';
+            const sidebar = document.getElementById('sidebar');
+            const resizer = document.getElementById('sidebarResizer');
+            
+            let isResizing = false;
+            let startX = 0;
+            let startWidth = 0;
+
+            // 恢复保存的宽度
+            function restoreSidebarWidth() {
+                const savedWidth = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+                if (savedWidth) {
+                    sidebar.style.width = savedWidth + 'px';
+                } else {
+                    sidebar.style.width = '260px'; // 默认宽度
+                }
+            }
+
+            // 保存宽度
+            function saveSidebarWidth() {
+                localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebar.offsetWidth);
+            }
+
+            // 开始拖拽
+            resizer.addEventListener('mousedown', function(e) {
+                isResizing = true;
+                startX = e.clientX;
+                startWidth = sidebar.offsetWidth;
+                
+                // 添加全局事件监听
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+                
+                // 防止选中文字
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            // 拖拽过程
+            function onMouseMove(e) {
+                if (!isResizing) return;
+                
+                const deltaX = e.clientX - startX;
+                let newWidth = startWidth + deltaX;
+                
+                // 限制宽度范围
+                const minWidth = 200;
+                const maxWidth = 600;
+                newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+                
+                sidebar.style.width = newWidth + 'px';
+            }
+
+            // 结束拖拽
+            function onMouseUp() {
+                isResizing = false;
+                saveSidebarWidth();
+                
+                // 移除全局事件监听
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+
+            // 初始化
+            restoreSidebarWidth();
         });
     </script>
 </body>
