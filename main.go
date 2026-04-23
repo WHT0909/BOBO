@@ -24,6 +24,7 @@ func main() {
 
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
+	r.Static("/static", "./static")
 
 	// 调用自己定义的路由配置函数
 	setupRoutes(r)
