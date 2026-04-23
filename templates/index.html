@@ -717,6 +717,7 @@
             // 新增项目对话框：父项目选择变化时自动填充分类
             const addParentSelect = document.getElementById('add-parent-id');
             const addCategorySelect = document.getElementById('add-category');
+            let addCategoryLocked = false;
 
             if (addParentSelect && addCategorySelect) {
                 addParentSelect.addEventListener('change', function() {
@@ -724,14 +725,30 @@
                     const parentCategory = selectedOption.getAttribute('data-category');
 
                     if (parentCategory && parentCategory !== '') {
-                        // 选择了父项目，自动设置分类并禁用
+                        // 选择了父项目，自动设置分类
                         addCategorySelect.value = parentCategory;
-                        addCategorySelect.disabled = true;
+                        addCategoryLocked = true;
+                        addCategorySelect.style.backgroundColor = '#f3f4f6';
+                        addCategorySelect.style.cursor = 'not-allowed';
                         addCategorySelect.title = '子项目分类必须与父项目一致';
                     } else {
                         // 没有选择父项目（顶级项目），恢复分类选择
-                        addCategorySelect.disabled = false;
+                        addCategoryLocked = false;
+                        addCategorySelect.style.backgroundColor = '';
+                        addCategorySelect.style.cursor = '';
                         addCategorySelect.title = '';
+                    }
+                });
+
+                // 防止用户在选择父项目后修改分类
+                addCategorySelect.addEventListener('mousedown', function(e) {
+                    if (addCategoryLocked) {
+                        e.preventDefault();
+                    }
+                });
+                addCategorySelect.addEventListener('keydown', function(e) {
+                    if (addCategoryLocked) {
+                        e.preventDefault();
                     }
                 });
 
@@ -744,6 +761,7 @@
             // 编辑项目对话框：父项目选择变化时自动填充分类
             const editParentSelect = document.getElementById('edit-parent-id');
             const editCategorySelect = document.getElementById('edit-category');
+            let editCategoryLocked = false;
 
             if (editParentSelect && editCategorySelect) {
                 editParentSelect.addEventListener('change', function() {
@@ -751,14 +769,30 @@
                     const parentCategory = selectedOption.getAttribute('data-category');
 
                     if (parentCategory && parentCategory !== '') {
-                        // 选择了父项目，自动设置分类并禁用
+                        // 选择了父项目，自动设置分类
                         editCategorySelect.value = parentCategory;
-                        editCategorySelect.disabled = true;
+                        editCategoryLocked = true;
+                        editCategorySelect.style.backgroundColor = '#f3f4f6';
+                        editCategorySelect.style.cursor = 'not-allowed';
                         editCategorySelect.title = '子项目分类必须与父项目一致';
                     } else {
                         // 没有选择父项目（顶级项目），恢复分类选择
-                        editCategorySelect.disabled = false;
+                        editCategoryLocked = false;
+                        editCategorySelect.style.backgroundColor = '';
+                        editCategorySelect.style.cursor = '';
                         editCategorySelect.title = '';
+                    }
+                });
+
+                // 防止用户在选择父项目后修改分类
+                editCategorySelect.addEventListener('mousedown', function(e) {
+                    if (editCategoryLocked) {
+                        e.preventDefault();
+                    }
+                });
+                editCategorySelect.addEventListener('keydown', function(e) {
+                    if (editCategoryLocked) {
+                        e.preventDefault();
                     }
                 });
 
@@ -773,7 +807,9 @@
             if (addModal) {
                 addModal.addEventListener('close', function() {
                     if (addCategorySelect) {
-                        addCategorySelect.disabled = false;
+                        addCategoryLocked = false;
+                        addCategorySelect.style.backgroundColor = '';
+                        addCategorySelect.style.cursor = '';
                         addCategorySelect.title = '';
                     }
                 });
@@ -783,7 +819,9 @@
             if (editModal) {
                 editModal.addEventListener('close', function() {
                     if (editCategorySelect) {
-                        editCategorySelect.disabled = false;
+                        editCategoryLocked = false;
+                        editCategorySelect.style.backgroundColor = '';
+                        editCategorySelect.style.cursor = '';
                         editCategorySelect.title = '';
                     }
                 });
@@ -930,6 +968,8 @@
                 const parentSelect = modal.querySelector('select[name="parent_id"]');
                 if (parentSelect) {
                     parentSelect.value = parentId;
+                    // 触发 change 事件以同步分类
+                    parentSelect.dispatchEvent(new Event('change'));
                 }
                 modal.showModal();
             }
