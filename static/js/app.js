@@ -134,9 +134,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // 标题链接 - 保持在当前页面，只添加 id 参数
             const link = document.createElement('a');
             const currentPath = window.location.pathname;
-            const hasQuery = window.location.search.length > 0;
-            const separator = hasQuery ? '&' : '?';
-            link.href = currentPath + separator + 'id=' + node.id;
+            // 直接使用 ? 分隔符，这样会替换已有的查询参数
+            link.href = currentPath + '?id=' + node.id;
             link.textContent = node.name;
             if (isCurrent) link.classList.add('active');
             link.style.flex = '1';
