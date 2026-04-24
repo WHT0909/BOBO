@@ -594,6 +594,8 @@ dialog::backdrop {
 .terminal-page {
     padding: 1.5rem;
     height: calc(100vh - 50px);
+    display: flex;
+    flex-direction: column;
 }
 
 .terminal-header {
@@ -602,6 +604,7 @@ dialog::backdrop {
     border-radius: 8px 8px 0 0;
     display: flex;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .terminal-dots {
@@ -634,14 +637,26 @@ dialog::backdrop {
 }
 
 .terminal-body {
-    background: #1f2937;
-    padding: 1.5rem;
+    background: #1e1e1e;
     border-radius: 0 0 8px 8px;
-    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-    color: #d1d5db;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    min-height: 400px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#xterm-terminal {
+    flex: 1;
+    height: 100%;
+}
+
+/* xterm.js样式覆盖 */
+.xterm {
+    padding: 1rem;
+}
+
+.xterm-viewport {
+    overflow-y: auto !important;
 }
 
 .terminal-line {

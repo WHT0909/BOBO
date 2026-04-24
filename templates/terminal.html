@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>终端 - Bobo 项目管理面板</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
 </head>
 <body>
     <div class="container">
@@ -53,14 +54,8 @@
                         </div>
                         <span class="terminal-title">Terminal</span>
                     </div>
-                    <div class="terminal-body">
-                        <div class="terminal-line">Welcome to Bobo 终端模拟</div>
-                        <div class="terminal-line">$ 系统已就绪</div>
-                        <div class="terminal-line">$ 此为示例内容，实际功能待开发</div>
-                        <div class="terminal-input-line">
-                            <span class="terminal-prompt">$ </span>
-                            <span class="terminal-cursor">_</span>
-                        </div>
+                    <div class="terminal-body" id="terminal-container">
+                        <div id="xterm-terminal"></div>
                     </div>
                 </div>
             </div>
@@ -120,7 +115,73 @@
             ]
         };
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
     <script src="/static/js/app.js"></script>
+    
+    <script>
+        // 初始化xterm终端
+        document.addEventListener('DOMContentLoaded', function() {
+            const terminalContainer = document.getElementById('xterm-terminal');
+            const terminal = new Terminal({
+                theme: {
+                    background: '#1e1e1e',
+                    foreground: '#d4d4d4'
+                },
+                cursorBlink: true
+            });
+            const fitAddon = new FitAddon.FitAddon();
+            terminal.loadAddon(fitAddon);
+            terminal.open(terminalContainer);
+            
+            // 等待DOM渲染完成后调整大小
+            setTimeout(() => {
+                fitAddon.fit();
+            }, 100);
+            
+            // 窗口大小变化时调整终端
+            window.addEventListener('resize', () => {
+                fitAddon.fit();
+            });
+            
+            // 构建WebSocket连接URL
+            let wsUrl = 'ws://' + window.location.host + '/ws/terminal';
+            if (window.AppData.currentProjectId > 0) {
+                wsUrl += '?id=' + window.AppData.currentProjectId;
+            }
+            
+            // 建立WebSocket连接
+            const ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                // 等待服务端发送欢迎信息
+            };
+            
+            ws.onmessage = function(event) {
+                terminal.write(event.data);
+            };
+            
+            ws.onerror = function(error) {
+                terminal.write('\r\nConnection error\r\n');
+            };
+            
+            ws.onclose = function() {
+                terminal.write('\r\nConnection closed\r\n');
+            };
+            
+            // 处理终端输入
+            terminal.onData(function(data) {
+                if (ws.readyState === WebSocket.OPEN) {
+                    // 对于回车键，确保发送 \r
+                    if (data === '\n' || data === '\r' || data === '\r\n') {
+                        ws.send('\r');
+                    } else {
+                        ws.send(data);
+                    }
+                }
+            });
+        });
+    </script>
     
 </body>
 </html>

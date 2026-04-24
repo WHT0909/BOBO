@@ -1,14 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 func main() {
@@ -32,8 +37,130 @@ func main() {
 	r.Run(":5050")
 }
 
+// WebSocket升级器配置
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+// 终端会话结构体
+type TerminalSession struct {
+	conn   *websocket.Conn
+	cmd    *exec.Cmd
+	stdin  io.WriteCloser
+	stdout io.ReadCloser
+	stderr io.ReadCloser
+	mu     sync.Mutex
+}
+
+// WebSocket终端处理函数
+func handleWebSocketTerminal(c *gin.Context) {
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+
+	// 创建一个简单的命令执行处理器，而不是持续运行的终端
+	conn.WriteMessage(websocket.TextMessage, []byte("Welcome to Bobo Web Terminal!\r\n"))
+	conn.WriteMessage(websocket.TextMessage, []byte("Type commands and press Enter to execute.\r\n\r\n"))
+
+	// 始终在 D:/ 根目录启动
+	workDir := "D:/"
+	conn.WriteMessage(websocket.TextMessage, []byte(workDir+"> "))
+
+	// 命令缓冲区
+	var inputBuffer []byte
+
+	for {
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			break
+		}
+
+		// 处理输入 - 直接使用字符串，因为 xterm.js 可能发送多字节序列
+		inputStr := string(message)
+
+		for _, char := range inputStr {
+			b := byte(char)
+
+			// 处理回车键 - 同时处理 \r 和 \n
+			if b == 13 || b == 10 {
+				// 如果是 \r，执行命令；如果是 \n，可能是跟随在 \r 后面的，跳过
+				if b == 13 {
+					// 执行命令
+					cmdStr := string(inputBuffer)
+					conn.WriteMessage(websocket.TextMessage, []byte("\r\n"))
+
+					if len(cmdStr) > 0 {
+						executeCommand(conn, cmdStr, workDir)
+					}
+
+					// 重置缓冲区
+					inputBuffer = []byte{}
+					conn.WriteMessage(websocket.TextMessage, []byte(workDir+"> "))
+				}
+				continue
+			}
+
+			if b == 127 || b == 8 { // Backspace 或 Ctrl+H
+				if len(inputBuffer) > 0 {
+					inputBuffer = inputBuffer[:len(inputBuffer)-1]
+					// 回显退格
+					conn.WriteMessage(websocket.TextMessage, []byte{8, 32, 8})
+				}
+				continue
+			}
+
+			// 普通字符，加入缓冲区并回显
+			inputBuffer = append(inputBuffer, b)
+			conn.WriteMessage(websocket.TextMessage, []byte{b})
+		}
+	}
+}
+
+func executeCommand(conn *websocket.Conn, cmdStr, workDir string) {
+	cmdStr = strings.TrimSpace(cmdStr)
+	if cmdStr == "" {
+		return
+	}
+
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd.exe", "/C", "chcp 65001 >nul & "+cmdStr)
+	} else {
+		cmd = exec.Command("bash", "-c", cmdStr)
+	}
+	cmd.Dir = workDir
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+
+	output := stdout.String()
+	errOutput := stderr.String()
+
+	if output != "" {
+		conn.WriteMessage(websocket.TextMessage, []byte(output))
+	}
+	if errOutput != "" {
+		conn.WriteMessage(websocket.TextMessage, []byte(errOutput))
+	}
+	if err != nil {
+		conn.WriteMessage(websocket.TextMessage, []byte("Error: "+err.Error()+"\r\n"))
+	}
+}
+
 // 路由配置函数
 func setupRoutes(r *gin.Engine) {
+	// WebSocket终端路由
+	r.GET("/ws/terminal", handleWebSocketTerminal)
+
 	// 首页展示项目
 	r.GET("/", func(c *gin.Context) {
 		// 获取所有项目用于侧边栏展示
