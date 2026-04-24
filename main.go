@@ -73,7 +73,8 @@ func handleWebSocketTerminal(c *gin.Context) {
 	conn.WriteMessage(websocket.TextMessage, []byte("Type commands and press Enter to execute.\r\n\r\n"))
 
 	workDir := "D:/"
-	writePrompt(conn, workDir)
+	var condaEnv string = ""
+	writePrompt(conn, workDir, condaEnv)
 
 	var inputBuffer []byte
 
@@ -94,11 +95,11 @@ func handleWebSocketTerminal(c *gin.Context) {
 					conn.WriteMessage(websocket.TextMessage, []byte("\r\n"))
 
 					if len(cmdStr) > 0 {
-						workDir = executeCommand(conn, cmdStr, workDir)
+						workDir, condaEnv = executeCommand(conn, cmdStr, workDir, condaEnv)
 					}
 
 					inputBuffer = []byte{}
-					writePrompt(conn, workDir)
+					writePrompt(conn, workDir, condaEnv)
 				}
 				continue
 			}
@@ -117,14 +118,18 @@ func handleWebSocketTerminal(c *gin.Context) {
 	}
 }
 
-func writePrompt(conn *websocket.Conn, workDir string) {
-	conn.WriteMessage(websocket.TextMessage, []byte(workDir+"> "))
+func writePrompt(conn *websocket.Conn, workDir, condaEnv string) {
+	if condaEnv != "" {
+		conn.WriteMessage(websocket.TextMessage, []byte("("+condaEnv+") "+workDir+"> "))
+	} else {
+		conn.WriteMessage(websocket.TextMessage, []byte(workDir+"> "))
+	}
 }
 
-func executeCommand(conn *websocket.Conn, cmdStr, workDir string) string {
+func executeCommand(conn *websocket.Conn, cmdStr, workDir, condaEnv string) (string, string) {
 	cmdStr = strings.TrimSpace(cmdStr)
 	if cmdStr == "" {
-		return workDir
+		return workDir, condaEnv
 	}
 
 	lowerCmd := strings.ToLower(cmdStr)
@@ -143,14 +148,49 @@ func executeCommand(conn *websocket.Conn, cmdStr, workDir string) string {
 			conn.WriteMessage(websocket.TextMessage, []byte("Error: 目录不存在: "+workDir+"\r\n"))
 			workDir = "D:/"
 		}
-		return workDir
+		return workDir, condaEnv
+	}
+
+	if lowerCmd == "conda deactivate" || lowerCmd == "conda deactivate" {
+		condaEnv = ""
+		conn.WriteMessage(websocket.TextMessage, []byte("Conda environment deactivated.\r\n"))
+		return workDir, condaEnv
+	}
+
+	if strings.HasPrefix(lowerCmd, "conda activate") {
+		envName := strings.TrimSpace(strings.TrimPrefix(cmdStr, "conda activate"))
+		envName = strings.TrimSpace(envName)
+		if envName == "" {
+			condaEnv = "base"
+		} else {
+			condaEnv = envName
+		}
+		var checkCmd *exec.Cmd
+		if runtime.GOOS == "windows" {
+			checkCmd = exec.Command("cmd.exe", "/C", "chcp 65001 >nul & conda env list")
+		} else {
+			checkCmd = exec.Command("bash", "-c", "conda env list")
+		}
+		checkOutput, _ := checkCmd.CombinedOutput()
+		if !strings.Contains(string(checkOutput), envName) && envName != "base" {
+			conn.WriteMessage(websocket.TextMessage, []byte("Warning: Environment '"+envName+"' not found in conda env list.\r\n"))
+		}
+		conn.WriteMessage(websocket.TextMessage, []byte("Activated conda environment: "+condaEnv+"\r\n"))
+		return workDir, condaEnv
+	}
+
+	var finalCmd string
+	if condaEnv != "" {
+		finalCmd = "conda run -n " + condaEnv + " --no-capture-output " + cmdStr
+	} else {
+		finalCmd = cmdStr
 	}
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd.exe", "/C", "chcp 65001 >nul & "+cmdStr)
+		cmd = exec.Command("cmd.exe", "/C", "chcp 65001 >nul & "+finalCmd)
 	} else {
-		cmd = exec.Command("bash", "-c", cmdStr)
+		cmd = exec.Command("bash", "-c", finalCmd)
 	}
 	cmd.Dir = workDir
 
@@ -172,7 +212,7 @@ func executeCommand(conn *websocket.Conn, cmdStr, workDir string) string {
 	if err != nil {
 		conn.WriteMessage(websocket.TextMessage, []byte("Error: "+err.Error()+"\r\n"))
 	}
-	return workDir
+	return workDir, condaEnv
 }
 
 // 路由配置函数
