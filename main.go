@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -22,14 +23,18 @@ func main() {
 		println("请使用 'bobo dev' 来启动服务")
 		return
 	}
-
-	InitDB()
+	exePath, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	baseDir := filepath.Dir(exePath)
+	InitDB(baseDir)
 	// 确保程序退出前关闭数据库连接
 	defer DB.Close()
 
 	r := gin.Default()
-	r.LoadHTMLGlob("templates/*")
-	r.Static("/static", "./static")
+	r.LoadHTMLGlob(filepath.Join(baseDir, "templates/*"))
+	r.Static("/static", filepath.Join(baseDir, "static"))
 
 	// 调用自己定义的路由配置函数
 	setupRoutes(r)
@@ -64,15 +69,12 @@ func handleWebSocketTerminal(c *gin.Context) {
 	}
 	defer conn.Close()
 
-	// 创建一个简单的命令执行处理器，而不是持续运行的终端
 	conn.WriteMessage(websocket.TextMessage, []byte("Welcome to Bobo Web Terminal!\r\n"))
 	conn.WriteMessage(websocket.TextMessage, []byte("Type commands and press Enter to execute.\r\n\r\n"))
 
-	// 始终在 D:/ 根目录启动
 	workDir := "D:/"
-	conn.WriteMessage(websocket.TextMessage, []byte(workDir+"> "))
+	writePrompt(conn, workDir)
 
-	// 命令缓冲区
 	var inputBuffer []byte
 
 	for {
@@ -81,51 +83,67 @@ func handleWebSocketTerminal(c *gin.Context) {
 			break
 		}
 
-		// 处理输入 - 直接使用字符串，因为 xterm.js 可能发送多字节序列
 		inputStr := string(message)
 
 		for _, char := range inputStr {
 			b := byte(char)
 
-			// 处理回车键 - 同时处理 \r 和 \n
 			if b == 13 || b == 10 {
-				// 如果是 \r，执行命令；如果是 \n，可能是跟随在 \r 后面的，跳过
 				if b == 13 {
-					// 执行命令
 					cmdStr := string(inputBuffer)
 					conn.WriteMessage(websocket.TextMessage, []byte("\r\n"))
 
 					if len(cmdStr) > 0 {
-						executeCommand(conn, cmdStr, workDir)
+						workDir = executeCommand(conn, cmdStr, workDir)
 					}
 
-					// 重置缓冲区
 					inputBuffer = []byte{}
-					conn.WriteMessage(websocket.TextMessage, []byte(workDir+"> "))
+					writePrompt(conn, workDir)
 				}
 				continue
 			}
 
-			if b == 127 || b == 8 { // Backspace 或 Ctrl+H
+			if b == 127 || b == 8 {
 				if len(inputBuffer) > 0 {
 					inputBuffer = inputBuffer[:len(inputBuffer)-1]
-					// 回显退格
 					conn.WriteMessage(websocket.TextMessage, []byte{8, 32, 8})
 				}
 				continue
 			}
 
-			// 普通字符，加入缓冲区并回显
 			inputBuffer = append(inputBuffer, b)
 			conn.WriteMessage(websocket.TextMessage, []byte{b})
 		}
 	}
 }
 
-func executeCommand(conn *websocket.Conn, cmdStr, workDir string) {
+func writePrompt(conn *websocket.Conn, workDir string) {
+	conn.WriteMessage(websocket.TextMessage, []byte(workDir+"> "))
+}
+
+func executeCommand(conn *websocket.Conn, cmdStr, workDir string) string {
 	cmdStr = strings.TrimSpace(cmdStr)
 	if cmdStr == "" {
-		return
+		return workDir
+	}
+
+	lowerCmd := strings.ToLower(cmdStr)
+
+	if strings.HasPrefix(lowerCmd, "cd ") || lowerCmd == "cd" {
+		target := strings.TrimSpace(strings.TrimPrefix(cmdStr, "cd"))
+		if target == "" {
+			workDir = "D:/"
+		} else if filepath.IsAbs(target) {
+			workDir = filepath.Clean(target)
+		} else {
+			workDir = filepath.Clean(filepath.Join(workDir, target))
+		}
+		info, err := os.Stat(workDir)
+		if err != nil || !info.IsDir() {
+			conn.WriteMessage(websocket.TextMessage, []byte("Error: 目录不存在: "+workDir+"\r\n"))
+			workDir = "D:/"
+		}
+		return workDir
 	}
 
 	var cmd *exec.Cmd
@@ -154,6 +172,7 @@ func executeCommand(conn *websocket.Conn, cmdStr, workDir string) {
 	if err != nil {
 		conn.WriteMessage(websocket.TextMessage, []byte("Error: "+err.Error()+"\r\n"))
 	}
+	return workDir
 }
 
 // 路由配置函数

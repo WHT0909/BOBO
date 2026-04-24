@@ -3,16 +3,18 @@ package main
 import (
 	"database/sql"
 	"log"
+	"path/filepath"
 
 	_ "github.com/mattn/go-sqlite3" // 隐式导入驱动
 )
 
 var DB *sql.DB
 
-func InitDB() {
+func InitDB(baseDir string) {
 	var err error
+	dbPath := filepath.Join(baseDir, "bobo.db")
 	// 打开（或创建）名为 bobo.db 的文件
-	DB, err = sql.Open("sqlite3", "./bobo.db")
+	DB, err = sql.Open("sqlite3", dbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
